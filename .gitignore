@@ -1,3 +1,13 @@
 **/.vscode/
 **/build/
 **/.idea/
+
+latex/template.synctex.gz
+
+latex/template.aux
+
+latex/template.fdb_latexmk
+
+latex/template.fls
+
+latex/template.log
