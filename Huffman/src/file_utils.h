@@ -22,4 +22,10 @@ FILE *openBinaryFile(char *filename);
  */
 void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16_t blockSize);
 
+/**
+ * Decompresses a file
+ * @param filename  The name of the file to be decompressed
+ */
+void decompressFile(char *filename);
+
 #endif //FILE_UTILS_H

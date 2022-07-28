@@ -230,3 +230,63 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
     free(buffer);
     fclose(compressed);
 }
+
+/**
+ * Decompresses a file
+ * @param filename  The name of the file to be decompressed
+ */
+void decompressFile(char *filename){
+    // Open the decompressed file in read mode
+    FILE *file = fopen(filename, "rb");
+
+    // Create a new file for decompression
+    int len = (int) strlen(filename); // Get the length of the old filename
+
+    char *newFilename = (char *) malloc((len - 1) * sizeof(char));  // Allocate enough space for the new file name
+
+    memccpy(newFilename, filename, sizeof(char), len - 5);  // Copy the old name to the new name
+    printf("\n\n%s\n", newFilename);
+
+    char end[5] = ".dec\0";  // The string to be appended to the file name
+
+    memccpy(newFilename + len - 5, end, sizeof(char), 5);  // Append the ending to the file name
+    printf("%s\n", newFilename);
+
+    // Create the new file
+    FILE *decompressed = fopen(newFilename, "wb");
+
+    if (decompressed == NULL) {
+        printf("\n\nCould not create file\n");
+        exit(1);
+    }
+
+    // Start decompressing the file
+
+    /*
+     * 1. Extract basic data (number of padding bits number of blocks and huffman tree)
+     * 2. Figure a way to decompress the file
+     */
+
+    // This is the number of padding bits to the end of the file. The padding bits align the data to bytes.
+    uint16_t nPaddingBits = 0;
+
+    // The number of blocks written to the file
+    uint32_t nBlocks = 0;
+
+    // The block size used to group data during the compression
+    uint16_t blockSize = 0;
+
+    // Read the numbers from the file
+    fread(&nPaddingBits, sizeof(nPaddingBits), 1, file);
+    fread(&nBlocks, sizeof(nBlocks), 1, file);
+    fread(&blockSize, sizeof(blockSize), 1, file);
+
+    // Retrieve the huffman info
+    ASCIIHuffman huffman;
+
+    // Read all the symbols from the file
+    fread(&huffman.symbols, sizeof(huffman.symbols[0]), 256, file);
+
+    fclose(decompressed);
+    fclose(file);
+}
