@@ -9,9 +9,10 @@ int main() {
     // The huffman struct
     ASCIIHuffman huffman;
 
-    // Initialize the frequency array
+    // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {
         huffman.charFreq[i] = 0;
+        huffman.symbols[i] = 0;
     }
 
     FILE *file = openBinaryFile("../data/test_3");
@@ -38,8 +39,8 @@ int main() {
 
     printf("%x", huffman.symbols[255]);
 
-    compressFile(file, "../data/test_3", &huffman);
-
+    compressFile(file, "../data/test_3", &huffman, 2);
+    decompressFile("../data/test_3.huff");
     fclose(file);
     return 0;
 }
