@@ -1,23 +1,4 @@
 #include "huffman_tree.h"
-#include <stdbool.h>
-
-/**
- * @brief  The huffman_node struct represent a node in the huffman tree. The node can be a leaf node or a regular node
- *
- */
-typedef struct huffman_node{
-    uint16_t leaf_symbol;  /// The huffman symbol
-    uint8_t ascii_index;  /// The ascii char
-    unsigned int freq;  /// The frequency of the character
-
-    bool isLeaf;  /// True if the node is a leaf node
-    bool isInTree;  /// True if the node is part of the tree
-
-    uint16_t left;  /// The index of the left child of the node (-1 if there are no children)
-    uint16_t right;  /// The index of the right child of the node (-1 if there are no children)
-
-} HuffmanNode;
-
 
 /**
  * Counts the character frequency of every ascii char of the file being compressed
