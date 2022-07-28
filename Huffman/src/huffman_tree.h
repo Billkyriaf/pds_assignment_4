@@ -29,7 +29,7 @@ typedef struct ascii_huffman {
     /**
      * Counts the frequency of every symbol
      */
-    unsigned int charFreq[256];
+    unsigned long int charFreq[256];
 
 } ASCIIHuffman;
 

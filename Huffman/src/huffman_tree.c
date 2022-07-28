@@ -28,8 +28,6 @@ void charFrequency(FILE *file, ASCIIHuffman *asciiHuffman) {
 
     uint8_t c;  // The character read from the file
 
-    // TODO handle non aligned data
-
     fseek(file, 0, SEEK_END);  // Jump to the end of the file
     long int file_len = ftell(file);  // Get the current byte offset in the file
 
@@ -198,10 +196,10 @@ void printTree(HuffmanNode *nodes, uint16_t nodes_index){
     for (int i = nodes_index + 1; i >= 0; --i) {
 
         if (nodes[i].isLeaf)
-            printf("    LeafNode: %d, freq: %u, symbol: 0x%x, character: %c\n",
+            printf("    LeafNode: %d, freq: %lu, symbol: 0x%x, character: %c\n",
                    i, nodes[i].freq, nodes[i].leaf_symbol, nodes[i].ascii_index);
         else
-            printf("Node: %d, freq: %u, left child %d, right child %d\n", i, nodes[i].freq, nodes[i].left, nodes[i].right);
+            printf("Node: %d, freq: %lu, left child %d, right child %d\n", i, nodes[i].freq, nodes[i].left, nodes[i].right);
     }
 }
 
