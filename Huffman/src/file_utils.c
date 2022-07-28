@@ -20,6 +20,64 @@ FILE *openBinaryFile(char *filename) {
 }
 
 /**
+ *
+ * @param buffer
+ * @param buff_index
+ * @param write_index
+ * @param compressed
+ * @param symbol_length
+ * @param symbol
+ * @param blockSize
+ */
+void updateBuffer(uint8_t *buffer,int *buff_index, uint8_t *write_index,uint32_t *nBlocks, FILE *compressed, uint8_t symbol_length, uint16_t symbol, uint16_t blockSize) {
+
+    // symbol_length + 3 is the index of the MSB in the symbol
+    if (symbol_length + 3 > *write_index) {
+        /*int blockSize
+         * If the index of the MSB of the symbol is bigger that the index of the next symbol in the buffer
+         * then the symbol must be shifted right so that the MSB of the symbol ends up in the same index as the
+         * write_index. After that we can simply add the symbol and the buffer and the symbol is appended to the
+         * buffer
+         */
+        symbol = symbol >> (symbol_length + 3 - *write_index);
+    } else {
+        /*
+         * If the index of the MSB of the symbol is smaller that the index of the next symbol in the buffer
+         * then the symbol must be shifted left so that the MSB of the symbol ends up in the same index as the
+         * write_index. After that we can simply add the symbol and the buffer and the symbol is appended to the
+         * buffer
+         */
+        symbol = symbol << (*write_index - (symbol_length + 3));
+    }
+
+    // Keep only the 8 LSBs of the symbol and append it to the buffer
+    buffer[*buff_index] += (uint8_t)symbol;
+
+
+    if (*write_index + 1 - symbol_length == 0) {  // if the symbol fits exactly...
+        *write_index = 7;  // ... reset the write_index ...
+        *buff_index += 1;  // ... and increment the buffer index
+
+        // If the buffer is full...
+        if (*buff_index == blockSize){
+            //... write the buffer to the file...
+            fwrite(buffer, sizeof(buffer[0]), blockSize, compressed);
+
+            *nBlocks += 1;  // increment the number of blocks
+            *buff_index = 0;  // ... and reset the index
+
+            // reset the buffer
+            for (int i = 0; i < blockSize; ++i) {
+                buffer[i] = 0;
+            }
+        }
+
+    } else {  // else if there is still space in the symbol
+        *write_index -= symbol_length;  // Update the write index
+    }
+}
+
+/**
  * Takes the file to be compressed reads the bits and creates a new compressed file. The compressed file has the
  * following format:
  *
