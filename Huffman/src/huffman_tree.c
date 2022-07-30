@@ -233,10 +233,10 @@ void updateSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, uint16_t s
  */
 void calculateSymbols(ASCIIHuffman *asciiHuffman){
     /*
-     * The maximum nodes a huffman tree with 256 different symbols can have is 1023. The nodes array holds all the nodes
+     * The maximum nodes a huffman tree with 256 different symbols can have is 511. The nodes array holds all the nodes
      * of the tree. The symbols are updated as the tree builds.
      */
-    HuffmanNode nodes[1023];
+    HuffmanNode nodes[511];
     uint16_t nodes_index;  // The index of the last node inserted
 
     // Init the array with the leaf nodes
@@ -299,4 +299,34 @@ void calculateSymbols(ASCIIHuffman *asciiHuffman){
 
     // FIXME remove print
     printTree(nodes, --nodes_index);
+}
+
+/**
+ * Creates a huffman tree from an array with the huffman symbols. The depth of every symbol is determined from the
+ * number of bits is has. The more bits the deeper on the tree
+ *
+ * @param asciiHuffman  The symbols array
+ * @param tree          The array that holds all the nodes
+ * @return              The index of the top node
+ */
+uint8_t huffmanFromArray(ASCIIHuffman *asciiHuffman, HuffmanNode *tree){
+    uint8_t tree_index = 0;
+    uint16_t len_mask = 0xF;  // mask to get the symbol length
+
+    // Create all the leaf nodes
+    for (int i = 0; i < 256; ++i) {
+        if (asciiHuffman->symbols[i] != 0){
+            tree[tree_index].leaf_symbol = asciiHuffman->symbols[i];     // The huffman symbol initially is 0
+            tree[tree_index].freq = asciiHuffman->symbols[i] & len_mask; // Character frequency is replaced by the length of the symbol
+            tree[tree_index].ascii_index = i;   // The character
+            tree[tree_index].isLeaf = true;     // These nodes are the leaf nodes of the tree
+            tree[tree_index].isInTree = false;  // The node is in the array, but it is not in the tree yet
+            tree[tree_index].left = -1;         // The index of the left child is -1 because there is no left child
+            tree[tree_index].right = -1;        // The index of the right child is -1 because there is no right child
+
+            tree_index++;  // increment the index
+        }
+    }
+
+    // Find the two nodes with the biggest symbols
 }

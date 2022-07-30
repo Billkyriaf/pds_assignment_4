@@ -66,4 +66,15 @@ void charFrequency(FILE *file, ASCIIHuffman *asciiHuffman);
  */
 void calculateSymbols(ASCIIHuffman *asciiHuffman);
 
+
+/**
+ * Creates a huffman tree from an array with the huffman symbols. The depth of every symbol is determined from the
+ * number of bits is has. The more bits the deeper on the tree
+ *
+ * @param asciiHuffman  The symbols array
+ * @param tree          The array that holds all the nodes
+ * @return              The index of the top node
+ */
+uint8_t huffmanFromArray(ASCIIHuffman *asciiHuffman, HuffmanNode *tree);
+
 #endif //HUFFMAN_TREE
