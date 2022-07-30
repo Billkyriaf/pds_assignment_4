@@ -98,11 +98,11 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
     int len = (int) strlen(filename); // Get the length of the old filename
     char *newFilename = (char *) malloc((len + 6) * sizeof(char));  // Allocate enough space for the new file name
 
-    memccpy(newFilename, filename, sizeof(char), len);  // Copy the old name to the new name
+    memcpy(newFilename, filename, sizeof(char) * len);  // Copy the old name to the new name
 
     char end[6] = ".huff\0";  // The string to be appended to the file name
 
-    memccpy(newFilename + len, end, sizeof(char), 6);  // Append the ending to the file name
+    memcpy(newFilename + len, end, sizeof(char) * 6);  // Append the ending to the file name
 
     // Create the new file
     FILE *compressed = fopen(newFilename, "wb");
@@ -244,13 +244,11 @@ void decompressFile(char *filename){
 
     char *newFilename = (char *) malloc((len - 1) * sizeof(char));  // Allocate enough space for the new file name
 
-    memccpy(newFilename, filename, sizeof(char), len - 5);  // Copy the old name to the new name
-    printf("\n\n%s\n", newFilename);
+    memcpy(newFilename, filename, sizeof(char) * (len - 5));  // Copy the old name to the new name
 
     char end[5] = ".dec\0";  // The string to be appended to the file name
 
-    memccpy(newFilename + len - 5, end, sizeof(char), 5);  // Append the ending to the file name
-    printf("%s\n", newFilename);
+    memcpy(newFilename + len - 5, end, sizeof(char) * 5);  // Append the ending to the file name
 
     // Create the new file
     FILE *decompressed = fopen(newFilename, "wb");
@@ -259,6 +257,9 @@ void decompressFile(char *filename){
         printf("\n\nCould not create file\n");
         exit(1);
     }
+
+    free(newFilename);  // free the no longer needed memory
+
 
     // Start decompressing the file
 
@@ -286,6 +287,18 @@ void decompressFile(char *filename){
 
     // Read all the symbols from the file
     fread(&huffman.symbols, sizeof(huffman.symbols[0]), 256, file);
+
+
+    //********************************
+    printf("\n\nPadding bits: %u, Blocks: %u, block size: %u.\n Read Huffman symbols: \n", nPaddingBits, nBlocks, blockSize);
+
+    // Print the symbol array
+    for (int i = 0; i < 255; ++i) {
+        printf("%x, ", huffman.symbols[i]);
+    }
+
+    printf("%x\n", huffman.symbols[255]);
+    //********************************
 
     fclose(decompressed);
     fclose(file);

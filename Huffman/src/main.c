@@ -23,23 +23,23 @@ int main() {
 
     // Print the frequency array
     for (int i = 0; i < 255; ++i) {
-        printf("%u, ", huffman.charFreq[i]);
+        printf("%lu, ", huffman.charFreq[i]);
     }
 
-    printf("%u", huffman.charFreq[255]);
+    printf("%lu", huffman.charFreq[255]);
 
     calculateSymbols(&huffman);
 
     printf("\n\nHuffman symbols: \n");
 
-    // Print the frequency array
+    // Print the symbol array
     for (int i = 0; i < 255; ++i) {
         printf("%x, ", huffman.symbols[i]);
     }
 
-    printf("%x", huffman.symbols[255]);
+    printf("%x\n", huffman.symbols[255]);
 
-    compressFile(file, "../data/test_3", &huffman, 2);
+    compressFile(file, "../data/test_3", &huffman, 1024);
     decompressFile("../data/test_3.huff");
     fclose(file);
     return 0;
