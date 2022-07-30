@@ -8,11 +8,16 @@ int main() {
 
     // The huffman struct
     ASCIIHuffman huffman;
+    huffman.longest_symbol = 0;
 
     // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {
         huffman.charFreq[i] = 0;
-        huffman.symbols[i] = 0;
+        huffman.symbols[i].symbol_length = 0;
+
+        for (int j = 0; j < 32; ++j) {
+            huffman.symbols[i].symbol[j] = 0;
+        }
     }
 
     FILE *file = openBinaryFile("../data/test_3");
