@@ -67,9 +67,13 @@ uint16_t initializeTree(ASCIIHuffman *asciiHuffman, HuffmanNode *nodes){
             nodes[nodes_index].ascii_index = i;   // The character
             nodes[nodes_index].isLeaf = true;     // These nodes are the leaf nodes of the tree
             nodes[nodes_index].isInTree = false;  // The node is in the array, but it is not in the tree yet
-            nodes[nodes_index].leaf_symbol = 0;   // The huffman symbol initially is 0
             nodes[nodes_index].left = -1;         // The index of the left child is -1 because there is no left child
             nodes[nodes_index].right = -1;        // The index of the right child is -1 because there is no right child
+
+            for (int j = 0; j < 32; ++j) {
+                nodes[nodes_index].leaf_symbol.symbol[j] = 0;   // The huffman symbol initially is 0
+            }
+            nodes[nodes_index].leaf_symbol.symbol_length = 0;   // The symbol length is initially 0
 
             // Increment the index of the tree array
             nodes_index++;
@@ -87,16 +91,24 @@ uint16_t initializeTree(ASCIIHuffman *asciiHuffman, HuffmanNode *nodes){
  * @param nodes        The nodes array of the tree
  * @param nodes_index  The index of the last node in the tree
  */
-void printTree(HuffmanNode *nodes, uint16_t nodes_index){
+void printTree(HuffmanNode *nodes, uint16_t nodes_index) {
     printf("Huffman Tree: \n");
 
     for (int i = nodes_index + 1; i >= 0; --i) {
 
-        if (nodes[i].isLeaf)
-            printf("    LeafNode: %d, freq: %lu, symbol: 0x%x, character: %c\n",
-                   i, nodes[i].freq, nodes[i].leaf_symbol, nodes[i].ascii_index);
-        else
-            printf("Node: %d, freq: %lu, left child %d, right child %d\n", i, nodes[i].freq, nodes[i].left, nodes[i].right);
+        if (nodes[i].isLeaf) {
+            printf("    LeafNode: %d, freq: %lu, symbol: 0x", i, nodes[i].freq);
+
+            for (int j = 0; j < SYMBOL_BYTES; ++j) {
+                printf("%x", nodes[i].leaf_symbol.symbol[j]);
+            }
+
+            printf(", character: %c\n", nodes[i].ascii_index);
+
+        } else {
+            printf("Node: %d, freq: %lu, left child %d, right child %d\n", i, nodes[i].freq, nodes[i].left,
+                   nodes[i].right);
+        }
     }
 }
 
