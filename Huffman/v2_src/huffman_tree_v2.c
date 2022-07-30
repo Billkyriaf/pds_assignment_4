@@ -268,19 +268,19 @@ uint8_t huffmanFromArray(ASCIIHuffman *asciiHuffman, HuffmanNode *tree){
     uint16_t len_mask = 0xF;  // mask to get the symbol length
 
     // Create all the leaf nodes
-    for (int i = 0; i < 256; ++i) {
-        if (asciiHuffman->symbols[i] != 0){
-            tree[tree_index].leaf_symbol = asciiHuffman->symbols[i];     // The huffman symbol initially is 0
-            tree[tree_index].freq = asciiHuffman->symbols[i] & len_mask; // Character frequency is replaced by the length of the symbol
-            tree[tree_index].ascii_index = i;   // The character
-            tree[tree_index].isLeaf = true;     // These nodes are the leaf nodes of the tree
-            tree[tree_index].isInTree = false;  // The node is in the array, but it is not in the tree yet
-            tree[tree_index].left = -1;         // The index of the left child is -1 because there is no left child
-            tree[tree_index].right = -1;        // The index of the right child is -1 because there is no right child
-
-            tree_index++;  // increment the index
-        }
-    }
+//    for (int i = 0; i < 256; ++i) {
+//        if (asciiHuffman->symbols[i] != 0){
+//            tree[tree_index].leaf_symbol = asciiHuffman->symbols[i];     // The huffman symbol initially is 0
+//            tree[tree_index].freq = asciiHuffman->symbols[i] & len_mask; // Character frequency is replaced by the length of the symbol
+//            tree[tree_index].ascii_index = i;   // The character
+//            tree[tree_index].isLeaf = true;     // These nodes are the leaf nodes of the tree
+//            tree[tree_index].isInTree = false;  // The node is in the array, but it is not in the tree yet
+//            tree[tree_index].left = -1;         // The index of the left child is -1 because there is no left child
+//            tree[tree_index].right = -1;        // The index of the right child is -1 because there is no right child
+//
+//            tree_index++;  // increment the index
+//        }
+//    }
 
     // Find the two nodes with the biggest symbols
 }
