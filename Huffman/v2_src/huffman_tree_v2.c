@@ -115,36 +115,54 @@ void printTree(HuffmanNode *nodes, uint16_t nodes_index) {
 
 /**
  * Recursive function that updates the huffman symbols of the leaf nodes. The nodes are updated from the top to the
- * bottom so every time the function is called the new bit is added to the LSB of the symbol.
+ * bottom so every time the function is called the new bit is added to the LSB of the sym.
  *
  * @param asciiHuffman  The final Huffman array
  * @param rootNode      The root node of the huffman tree
- * @param symbol        The huffman symbol up to that depth
+ * @param sym           The huffman symbol up to that depth
  * @param nodes         The array of the tree nodes
  */
-void updateSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, uint16_t symbol, HuffmanNode *nodes){
+void updateSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol sym, HuffmanNode *nodes){
 
     // Termination condition. If the node is a leaf node ...
     if (rootNode->isLeaf){
-        // ... update the symbol in the tree
-        rootNode->leaf_symbol = symbol;
+        // And update the sym in the final huffman struct
+        asciiHuffman->symbols[rootNode->ascii_index].symbol_length = sym.symbol_length;
 
-        // And update the symbol in the final huffman struct
-        asciiHuffman->symbols[rootNode->ascii_index] = symbol;
+        // Deep copy all the parts of the symbol
+        memcpy(asciiHuffman->symbols[rootNode->ascii_index].symbol, sym.symbol, SYMBOL_BYTES);
+
         return;
     }
 
     // If the node is not a leaf node the function will be recursively called for the left and right child
 
-    // The left and right symbols are created from the current symbol...
-    uint16_t left_symbol = symbol;
-    uint16_t right_symbol = symbol;
+    // The left and right symbols are created from the current sym...
+    Symbol left_symbol;
+    Symbol right_symbol;
 
-    // ... by appending the bit 0 to the left symbol
-    left_symbol = appendBitToSymbol(left_symbol, 0);
+    // deep copy all the parts of the symbol
+    memcpy(left_symbol.symbol, sym.symbol, SYMBOL_BYTES);
+    memcpy(right_symbol.symbol, sym.symbol, SYMBOL_BYTES);
 
-    // ... and the bit 1 to the right symbol
-    right_symbol = appendBitToSymbol(right_symbol, 1);
+    // ... by appending the bit 0 to the left sym
+    appendBitToSymbol(&left_symbol, 0);
+
+    // ... and the bit 1 to the right sym
+    appendBitToSymbol(&right_symbol, 1);
+
+    /*
+     * Update the longest symbol. The longest symbol measures the minimum number of bytes it is required to represent
+     * all the huffman symbols. To find it simply get the div of the symbol length in bits with 8 (8bits in a byte)
+     * and add 1 since 1 byte is always required
+     */
+    if (1 + left_symbol.symbol_length / 8 > asciiHuffman->longest_symbol){
+        asciiHuffman->longest_symbol = 1 + left_symbol.symbol_length / 8;
+    }
+
+    if (1 + right_symbol.symbol_length / 8 > asciiHuffman->longest_symbol){
+        asciiHuffman->longest_symbol = 1 + right_symbol.symbol_length / 8;
+    }
 
     // The function is called recursively for the left ...
     updateSymbols(asciiHuffman, &nodes[rootNode->left], left_symbol, nodes);
@@ -222,11 +240,19 @@ void calculateSymbols(ASCIIHuffman *asciiHuffman){
 
     }
 
+    // Initial symbol all zero
+    Symbol sym;
+
+    sym.symbol_length = 0;
+    for (int i = 0; i < SYMBOL_BYTES; ++i) {
+        sym.symbol[i] = 0;
+    }
+
     // After the tree is complete all the symbols are updated
-    updateSymbols(asciiHuffman, &nodes[--nodes_index], 0, nodes);
+    updateSymbols(asciiHuffman, &nodes[nodes_index - 1], sym, nodes);
 
     // FIXME remove print
-    printTree(nodes, --nodes_index);
+    printTree(nodes, nodes_index - 1);
 }
 
 /**
