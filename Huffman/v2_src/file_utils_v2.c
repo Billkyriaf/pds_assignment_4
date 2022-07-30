@@ -3,6 +3,7 @@
 
 #include "file_utils_v2.h"
 
+
 /**
  * Opens a file in binary format for reading
  * @param filename The file name
@@ -19,6 +20,7 @@ FILE *openBinaryFile(char *filename) {
     return file;
 }
 
+
 /**
  *
  * @param buffer
@@ -29,7 +31,9 @@ FILE *openBinaryFile(char *filename) {
  * @param symbol
  * @param blockSize
  */
-void updateBuffer(uint8_t *buffer,int *buff_index, uint8_t *write_index,uint32_t *nBlocks, FILE *compressed, uint8_t symbol_length, uint16_t symbol, uint16_t blockSize) {
+void updateBuffer(uint8_t *buffer, int *buff_index, uint8_t *write_index, uint32_t *nBlocks, FILE *compressed,
+                  Symbol symbol, uint16_t blockSize) {
+
 
     // symbol_length + 3 is the index of the MSB in the symbol
     if (symbol_length + 3 > *write_index) {
@@ -51,7 +55,7 @@ void updateBuffer(uint8_t *buffer,int *buff_index, uint8_t *write_index,uint32_t
     }
 
     // Keep only the 8 LSBs of the symbol and append it to the buffer
-    buffer[*buff_index] += (uint8_t)symbol;
+    buffer[*buff_index] += (uint8_t) symbol;
 
 
     if (*write_index + 1 - symbol_length == 0) {  // if the symbol fits exactly...
@@ -59,7 +63,7 @@ void updateBuffer(uint8_t *buffer,int *buff_index, uint8_t *write_index,uint32_t
         *buff_index += 1;  // ... and increment the buffer index
 
         // If the buffer is full...
-        if (*buff_index == blockSize){
+        if (*buff_index == blockSize) {
             //... write the buffer to the file...
             fwrite(buffer, sizeof(buffer[0]), blockSize, compressed);
 
@@ -77,6 +81,30 @@ void updateBuffer(uint8_t *buffer,int *buff_index, uint8_t *write_index,uint32_t
     }
 }
 
+
+/**
+ * The worst case regarding symbol length is 32 bytes. This is a rare and very specific case. To conserve as much
+ * space as possible we store the symbols using the minimum number of bytes required. After every symbol the length
+ * of it is written. Before the huffman table the number of bytes per symbols is also written in the file
+ *
+ * @param file     The compressed file pointer
+ * @param huffman  The huffman struct containing all the symbols
+ */
+void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman) {
+    // Write the size of the symbols in the file
+    fwrite(&huffman->longest_symbol, sizeof(huffman->longest_symbol), 1, file);
+
+    // Write the symbols with their lengths in the file
+    for (int i = 0; i < 256; ++i) {
+        // Write the huffman table to the beginning of the file
+        fwrite(huffman->symbols[i].symbol, sizeof(huffman->symbols[0].symbol[0]), huffman->longest_symbol, file);
+
+        // Write the length of the symbol to the file
+        fwrite(&huffman->symbols[i].symbol_length, sizeof(huffman->symbols[i].symbol_length), 1, file);
+    }
+}
+
+
 /**
  * Takes the file to be compressed reads the bits and creates a new compressed file. The compressed file has the
  * following format:
@@ -84,8 +112,12 @@ void updateBuffer(uint8_t *buffer,int *buff_index, uint8_t *write_index,uint32_t
  *      Byte 0:1      The number of the padding bits added to the end of the file (uint16_t)
  *      Byte 2:5      The number of blocks in the file (uint32_t)
  *      Byte 6:7      The block size used to group data (uint16_t)
- *      Byte 8:519    The huffman table used to compress the file  (256 x uint16_t)
- *      Byte 520:end  The compressed data
+ *      Byte 8        The number of bytes per huffman symbol (uint8_t)
+ *      Byte 9:...    The huffman table used to compress the file. The symbols have variable length so after every
+ *                    symbol the length of it is written (uint8_t). All the symbols written in the file are the same
+ *                    number of bytes but this number is not known beforehand (This number is fount in the 8th byte of
+ *                    the file). The total number of symbols is 256
+ *      Byte ...:end  The compressed data
  *
  * @param file          The original file
  * @param filename      The filename of the compressed file
@@ -98,11 +130,11 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
     int len = (int) strlen(filename); // Get the length of the old filename
     char *newFilename = (char *) malloc((len + 6) * sizeof(char));  // Allocate enough space for the new file name
 
-    memccpy(newFilename, filename, sizeof(char), len);  // Copy the old name to the new name
+    memcpy(newFilename, filename, sizeof(char) * len);  // Copy the old name to the new name
 
     char end[6] = ".huff\0";  // The string to be appended to the file name
 
-    memccpy(newFilename + len, end, sizeof(char), 6);  // Append the ending to the file name
+    memcpy(newFilename + len, end, sizeof(char) * 6);  // Append the ending to the file name
 
     // Create the new file
     FILE *compressed = fopen(newFilename, "wb");
@@ -120,7 +152,7 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
     fwrite(&nPaddingBits, sizeof(nPaddingBits), 1, compressed);
 
 
-    // The number of blocks written to the file
+    // The number of blocks written to the file.
     uint32_t nBlocks = 0;
 
     // Write the number of blocks. The actual number will be written in the end of the process
@@ -130,7 +162,7 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
     fwrite(&blockSize, sizeof(blockSize), 1, compressed);
 
     // Write the huffman table to the beginning of the file
-    fwrite(asciiHuffman->symbols, sizeof(asciiHuffman->symbols[0]), 256, compressed);
+    writeHuffmanToFile(compressed, asciiHuffman);
 
     // The max block size is 4KB // TODO come up with a number that I did not pull out of my butt
     if (blockSize > 4096)
@@ -148,11 +180,9 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
 
     rewind(file);  // Jump back to the beginning of the file
 
-    uint16_t symbol;  // The symbol along with the symbol length of every char
+    Symbol symbol;  // The symbol along with the symbol length of every char
     uint8_t symbol_length;  // The symbol length
     uint8_t write_index = 7;  // The index of the start point of the symbol in the buffer
-
-    uint16_t length_mask = 0xF;  // The mask that extracts the symbol length
 
     // The index to the buffer
     int buff_index = 0;
@@ -162,14 +192,10 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
         fread(&c, sizeof(c), 1, file);  // Read from the file
 
         symbol = asciiHuffman->symbols[c];  // The symbol of the read char
-        symbol_length = symbol & length_mask;  // The number of bits of the symbol
+        symbol_length = symbol.symbol_length;  // The number of bits of the symbol
 
         if (write_index + 1 - symbol_length < 0) {  // If the buffer can't fit the symbol
             // The buffer can fit write_index + 1 bits of the symbol
-
-            // Remove the length part of the symbol
-            symbol -= symbol_length;
-
             uint16_t mask = (1 << (symbol_length - write_index + 3)) - 1;
 
             // Split the symbol
@@ -184,14 +210,12 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
             updateBuffer(buffer, &buff_index, &write_index, &nBlocks, compressed, symbol_length, symbol, blockSize);
 
             // append the remaining symbol to the buffer and if the buffer is full write to the file
-            updateBuffer(buffer, &buff_index, &write_index, &nBlocks, compressed, remaining_length, remaining_symbol, blockSize);
+            updateBuffer(buffer, &buff_index, &write_index, &nBlocks, compressed, remaining_length, remaining_symbol,
+                         blockSize);
 
         } else {  // else if the symbol fits in the buffer
-            // Remove the length part of the symbol
-            symbol -= symbol_length;
-
             // append to the buffer and if the buffer is full write to the file
-            updateBuffer(buffer, &buff_index, &write_index, &nBlocks, compressed, symbol_length, symbol, blockSize);
+            updateBuffer(buffer, &buff_index, &write_index, &nBlocks, compressed, symbol, blockSize);
         }
     }
 
@@ -199,7 +223,8 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
 
     // if the buffer index is not 0 or the write index is not 7 the last buffer was not full
     if (buff_index != 0 || write_index != 7) {
-        nPaddingBits += 8 * (blockSize - buff_index);  // Update the number of padding bits. Every buffer element is 8 bits
+        nPaddingBits +=
+                8 * (blockSize - buff_index);  // Update the number of padding bits. Every buffer element is 8 bits
 
         // zero the remaining bits in the buffer[buff_index]
         if (write_index != 7) {
@@ -235,7 +260,7 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
  * Decompresses a file
  * @param filename  The name of the file to be decompressed
  */
-void decompressFile(char *filename){
+void decompressFile(char *filename) {
     // Open the decompressed file in read mode
     FILE *file = fopen(filename, "rb");
 
@@ -244,11 +269,11 @@ void decompressFile(char *filename){
 
     char *newFilename = (char *) malloc((len - 1) * sizeof(char));  // Allocate enough space for the new file name
 
-    memccpy(newFilename, filename, sizeof(char), len - 5);  // Copy the old name to the new name
+    memcpy(newFilename, filename, sizeof(char) * (len - 5));  // Copy the old name to the new name
 
     char end[5] = ".dec\0";  // The string to be appended to the file name
 
-    memccpy(newFilename + len - 5, end, sizeof(char), 5);  // Append the ending to the file name
+    memcpy(newFilename + len - 5, end, sizeof(char) * 5);  // Append the ending to the file name
 
     // Create the new file
     FILE *decompressed = fopen(newFilename, "wb");
@@ -290,7 +315,8 @@ void decompressFile(char *filename){
 
 
     //********************************
-    printf("\n\nPadding bits: %u, Blocks: %u, block size: %u.\n Read Huffman symbols: \n", nPaddingBits, nBlocks, blockSize);
+    printf("\n\nPadding bits: %u, Blocks: %u, block size: %u.\n Read Huffman symbols: \n", nPaddingBits, nBlocks,
+           blockSize);
 
     // Print the symbol array
     for (int i = 0; i < 255; ++i) {

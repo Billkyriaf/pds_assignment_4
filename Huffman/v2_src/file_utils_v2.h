@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include "huffman_tree_v2.h"
 
+
 /**
  * Opens a file in binary format for reading
+ *
  * @param filename The file name
  * @return  The FILE pointer created
  */
@@ -22,8 +24,10 @@ FILE *openBinaryFile(char *filename);
  */
 void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16_t blockSize);
 
+
 /**
  * Decompresses a file
+ *
  * @param filename  The name of the file to be decompressed
  */
 void decompressFile(char *filename);
