@@ -1,7 +1,11 @@
+#include <stdlib.h>
+#include <string.h>
 #include "huffman_tree_v2.h"
+
 
 /**
  * Counts the character frequency of every ascii char of the file being compressed
+ *
  * @param file  The file to count the frequencies
  * @param asciiHuffman  The huffman struct
  */
@@ -25,116 +29,28 @@ void charFrequency(FILE *file, ASCIIHuffman *asciiHuffman) {
 
 
 /**
- * Prepends 1 bit to the symbol 16bit representation number. The symbol format is the following
  *
- *    MSB 15... .... ...4 3..0  LSB
- *         0000 0000 0000 0000
- *
- *    bits 0:3   store the information of how many bits is the huffman symbol
- *    bits 4:15  store the huffman symbol
- *
- *    eg:
- *        symbol     = 0000 0000 0111 0101  That means that the symbol is 5bits long and the symbol is 00111
- *
- *    Prepend bit 1 to symbol:
- *
- *        new_symbol = 0000 0010 0111 0110  The 1 was added to the bit 9 (prepended to the symbol which already
- *                                                                        had 5 bits, bit 4 to bit 8)
- *
- * @param symbol  The symbol to update
- * @param bit     The bit to add (0 or 1)
- * @return        The updated symbol
  */
-uint16_t prependBitToSymbol(uint16_t symbol, uint16_t bit){
-    uint16_t mask = 0xF;  // mask is set to 0000 0000 0000 1111
+void appendBitToSymbol(Symbol *sym, uint8_t bit){
+    // The symbol_length DIV 8 gives the byte index that the new bit will be appended
+    uint8_t byte_index = sym->symbol_length / 8;
 
-    /*
-     * This is the number of shift bits in order to add a new bit to the symbol. symbol & 0000_0000_0000_1111 gives the
-     * last 4 bits of the symbol that represent the number of bits the symbol has. If we add 4 to this we get the number
-     * of left shifts that we need to perform on bit variable in order for the nwe bit to come to the position we want it
-     */
-    uint16_t shiftBits = (symbol & mask) + 4;
+    // The symbol_length MOD 8 gives the position in the byte the new bit will be inserted
+    uint8_t insert_position = sym->symbol_length % 8;
 
-    symbol += 1;  // +1 increases the number of bits part (last 4 bits) of the symbol
+    // Since C does not have a rotate operator the bits are shifted left so that the bit ands up in the position to be inserted
+    bit = bit << (7 - insert_position);
 
-    /*
-     * Shifting the bit by shiftBits produces a mask with the new bit to the position.
-     *
-     * eg.
-     *     Say we want to add 1 to this symbol 0000 0000 0111 0101. the shiftBits is 0000 0000 0000 0101 + 4 which is 9
-     *     in decimal. The symbol part of the 16 bit value is 00111 and the new symbol will be 100111.
-     *
-     *     The bit = 0000 0000 0000 0001 so by shifting it by shiftBits = 9 we get 0000 0010 0000 0000
-     *
-     *     The symbol is incremented by 1 (symbol + 1) = 0000 0000 0111 (0110) -> 6 is the length of the new symbol
-     *     So now we only need to add the bit with the symbol to get the new symbol:
-     *
-     *                                          bit  0000 0010 0000 0000
-     *                                   +   symbol  0000 0000 0111 0110
-     *                                   ────────────────────────────────
-     *                                   new_symbol  0000 0010 0111 0110
-     */
-    bit = bit << shiftBits;
+    sym->symbol_length++; // increase the length of the symbol by 1
 
-    return bit + symbol;
-}
-
-
-/**
- * Appends 1 bit to the symbol 16bit representation number. The symbol format is the following
- *
- *    MSB 15... .... ...4 3..0  LSB
- *         0000 0000 0000 0000
- *
- *    bits 0:3   store the information of how many bits is the huffman symbol
- *    bits 4:15  store the huffman symbol
- *
- *    eg:
- *        symbol     = 0000 0000 0111 0101  That means that the symbol is 5bits long and the symbol is 00111
- *
- *        Append bit 0 to symbol:
- *
- *        new_symbol = 0000 0000 1110 0110  The 0 was added to the bit 4 (appended to the symbol)
- *
- *
- * @param symbol  The symbol to update
- * @param bit     The bit to add (0 or 1)
- * @return        The updated symbol
- */
-uint16_t appendBitToSymbol(uint16_t symbol, uint16_t bit){
-    uint16_t mask = 0xFFF0;  // mask is set to 1111 1111 1111 0000
-
-    symbol += 1;  // +1 increases the number of bits part (last 4 bits) of the symbol
-
-    /*
-     * To append the bit to the symbol we get the symbol with the help of the mask. Then the new symbol is shifted left
-     * by one to make room for the new bit, the bit is sifted 4 places to align, and then it is added.
-     *
-     *      eg.  Initial symbol 0000 0000 0011 0010  and bit = 0000 0000 0000 0001
-     *
-     *         symbol & mask         = 0000 0000 0011 0000
-     *
-     *
-     *     (symbol & mask) << 1      = 0000 0000 0110 0000
-     *    +      bit << 4            = 0000 0000 0001 0000
-     *    ──────────────────────────────────────────────────
-     *           new_symbol          = 0000 0000 0111 0000
-     */
-    uint16_t new_symbol = symbol & mask;
-    new_symbol = new_symbol << 1;
-    new_symbol += (bit << 4);
-
-    // Get the 4 LSB from the old symbol and add them to the new symbol
-
-    mask = 0xF;  // mask is set to 0000 0000 0000 1111
-
-    // Symbol & mask gives the 4 LSB of the old symbol.
-    return new_symbol + (symbol & mask);
+    // To append the ne bit we simply need to add the shifted bit to the byte that the symbol was inserted.
+    sym->symbol[byte_index] += bit;
 }
 
 
 /**
  * Initializes the leaf nodes of the tree.
+ *
  * @param asciiHuffman  The ASCIIHuffman struct
  * @param nodes         The nodes array
  * @return              The index of the next node to be inserted in the array
