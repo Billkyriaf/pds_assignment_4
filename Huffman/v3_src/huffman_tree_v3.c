@@ -21,7 +21,7 @@ void charFrequency(FILE *file, HalfASCIIHuffman *huffman) {
     uint8_t c;  // The character read from the file
 
     fseek(file, 0, SEEK_END);  // Jump to the end of the file
-    long int file_len = ftell(file);  // Get the current byte offset in the file
+    unsigned long int file_len = ftell(file);  // Get the current byte offset in the file
 
     rewind(file);  // Jump back to the beginning of the file
 
@@ -31,7 +31,7 @@ void charFrequency(FILE *file, HalfASCIIHuffman *huffman) {
     uint8_t msb_mask = 0xF0;
     uint8_t lsb_mask = 0x0F;
 
-    int scan_size = file_len;
+    unsigned long int scan_size = file_len;
 
 //    // Determine the scan_size of the file
 //    if (file_len > 2 * SCAN_SIZE)
@@ -40,7 +40,7 @@ void charFrequency(FILE *file, HalfASCIIHuffman *huffman) {
 //        scan_size = file_len;
 
     // Read from the file byte by byte
-    for (int i = 0; i < scan_size; ++i) {
+    for (unsigned long int i = 0; i < scan_size; ++i) {
         fread(&c, sizeof(c), 1, file);
 
         /*

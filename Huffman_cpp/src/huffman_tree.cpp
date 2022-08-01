@@ -1,7 +1,7 @@
 #include <iostream>
 #include "huffman_tree.h"
 
-#define SCAN_SIZE 20 * 102400  // 200MB
+#define SCAN_SIZE 1 * 1024 * 1024 * 1024  // 1GB
 
 /**
  * Counts the character frequency of every ascii char of the file being compressed. The ascii characters are 8 bits long
@@ -21,11 +21,11 @@ void charFrequency(FILE *file, HalfASCIIHuffman *huffman) {
     uint8_t c;  // The character read from the file
 
     fseek(file, 0, SEEK_END);  // Jump to the end of the file
-    long int file_len = ftell(file);  // Get the current byte offset in the file
+    unsigned long int file_len = ftell(file);  // Get the current byte offset in the file
 
     rewind(file);  // Jump back to the beginning of the file
 
-    long int scan_size;
+    unsigned long int scan_size;
 
     // Determine the scan_size of the file
     if (file_len > SCAN_SIZE)
@@ -34,7 +34,7 @@ void charFrequency(FILE *file, HalfASCIIHuffman *huffman) {
         scan_size = file_len;
 
     // Read from the file byte by byte
-    for (int i = 0; i < scan_size; ++i) {
+    for (unsigned long int i = 0; i < scan_size; ++i) {
         fread(&c, sizeof(c), 1, file);
 
         // For every half char read update the frequency

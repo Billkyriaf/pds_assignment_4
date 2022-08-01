@@ -148,7 +148,7 @@ void compressFile(FILE *file, char *filename, HalfASCIIHuffman *huffman, uint16_
     uint8_t c;  // The character read from the file
 
     fseek(file, 0, SEEK_END);  // Jump to the end of the file
-    long int file_len = ftell(file);  // Get the current byte offset in the file
+    unsigned long int file_len = ftell(file);  // Get the current byte offset in the file
 
     rewind(file);  // Jump back to the beginning of the file
 
@@ -165,7 +165,7 @@ void compressFile(FILE *file, char *filename, HalfASCIIHuffman *huffman, uint16_
     int buff_index = 0;
 
     // Read from the file byte by byte
-    for (int i = 0; i < file_len; ++i) {
+    for (unsigned long int i = 0; i < file_len; ++i) {
         fread(&c, sizeof(c), 1, file);  // Read from the file
 
         half_char = (c & msb_mask) >> 4;  // brake c in two 4 bit chars
