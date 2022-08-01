@@ -184,6 +184,8 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *asciiHuffman, uint16
     uint8_t symbol_length;  // The symbol length
     uint8_t write_index = 7;  // The index of the start point of the symbol in the buffer
 
+    size_t symbolSize = sizeof(symbol.symbol[0]);
+
     // The index to the buffer
     int buff_index = 0;
 

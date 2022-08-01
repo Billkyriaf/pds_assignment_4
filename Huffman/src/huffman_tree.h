@@ -26,7 +26,6 @@ typedef struct ascii_huffman {
      *        symbols[0] = 0000 0000 0111 0101  That means that the symbol is 5bits long and the symbol is 00111
      */
     uint16_t symbols[256];
-
     /**
      * Counts the frequency of every symbol
      */
