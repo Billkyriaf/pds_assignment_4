@@ -42,9 +42,10 @@ FILE *openBinaryFile(char *filename) {
 void insertToBuffer(uint128_t *buffer, int *buff_index, uint8_t *write_index, uint32_t *nBlocks, FILE *compressed,
                     uint8_t symbol_length, uint256_t symbol, uint16_t bufferSize) {
 
-    buffer[*buff_index] = buffer[*buff_index] << symbol_length;
-    // Keep only the 8 LSBs of the symbol and append it to the buffer
-    buffer[*buff_index] += (uint8_t)symbol;
+    buffer[*buff_index] = buffer[*buff_index] << symbol_length;  // make room for the new symbol
+
+    // Keep only the 128 LSBs of the symbol and append it to the buffer
+    buffer[*buff_index] += symbol.lower();
 
     if (*write_index + 1 - symbol_length == 0) {  // if the symbol fits exactly...
         *write_index = 127;  // ... reset the write_index ...
