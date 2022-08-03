@@ -1,7 +1,10 @@
 #include <iostream>
+#include <cmath>
 #include "huffman_tree.h"
 
-#define SCAN_SIZE 1 * 1024 * 1024 * 1024  // 1GB
+#define SCAN_SIZE 200 * 1024 * 1024 // * 1024  // 200MB
+//#define DEBUG_MODE
+
 
 /**
  * Counts the character frequency of every ascii char of the file being compressed. The ascii characters are 8 bits long
@@ -16,7 +19,7 @@
  * @param file     The file to count the frequencies
  * @param huffman  The huffman struct
  */
-void charFrequency(FILE *file, HalfASCIIHuffman *huffman) {
+void charFrequency(FILE *file, ASCIIHuffman *huffman) {
 
     uint8_t c;  // The character read from the file
 
@@ -44,12 +47,13 @@ void charFrequency(FILE *file, HalfASCIIHuffman *huffman) {
 
 
 /**
- * Shifts the symbol by 1 to the left and adds the new symbol in the lsb position of the symbol
+ * Shifts the bit by length to the left and adds the new bit in the msb position of the symbol
  *
  * @param sym   Pointer to the symbol to update
  * @param bit   The bit to append
  */
-void appendBitToSymbol(Symbol *sym, uint8_t bit) {
+void addBitToSymbol(Symbol *sym, uint8_t bit) {
+
     // Left shift the symbol to make space for the new bit
     sym->symbol = (sym->symbol << 1) + bit;
 
@@ -61,11 +65,11 @@ void appendBitToSymbol(Symbol *sym, uint8_t bit) {
 /**
  * Initializes the leaf nodes of the tree.
  *
- * @param huffman  The HalfASCIIHuffman struct
+ * @param huffman  The ASCIIHuffman struct
  * @param nodes         The nodes array
  * @return              The index of the next node to be inserted in the array
  */
-uint16_t initializeTree(HalfASCIIHuffman *huffman, HuffmanNode *nodes) {
+uint16_t initializeTree(ASCIIHuffman *huffman, HuffmanNode *nodes) {
     uint16_t nodes_index = 0;
 
     // init the leaf nodes
@@ -121,7 +125,7 @@ void printTree(HuffmanNode *nodes, uint16_t nodes_index) {
  * @param sym           The huffman symbol up to that depth
  * @param nodes         The array of the tree nodes
  */
-void updateSymbols(HalfASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol sym, HuffmanNode *nodes) {
+void updateSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol sym, HuffmanNode *nodes) {
 
     // Termination condition. If the node is a leaf node ...
     if (rootNode->isLeaf) {
@@ -138,10 +142,10 @@ void updateSymbols(HalfASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol
     Symbol right_symbol = sym;
 
     // ... by appending the bit 0 to the left sym
-    appendBitToSymbol(&left_symbol, 0);
+    addBitToSymbol(&left_symbol, 0);
 
     // ... and the bit 1 to the right sym
-    appendBitToSymbol(&right_symbol, 1);
+    addBitToSymbol(&right_symbol, 1);
 
     if (nodes[rootNode->left].isInTree) {
         // The function is called recursively for the left ...
@@ -160,7 +164,7 @@ void updateSymbols(HalfASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol
  * a frequency of more than 1)
  * @param asciiHuffman  The huffman struct with the character frequencies
  */
-void calculateSymbols(HalfASCIIHuffman *asciiHuffman) {
+void calculateSymbols(ASCIIHuffman *asciiHuffman) {
     /*
      * The maximum nodes a huffman tree with 16 different symbols can have is 31. The nodes array holds all the nodes
      * of the tree. The symbols are updated as the tree builds.
@@ -232,8 +236,9 @@ void calculateSymbols(HalfASCIIHuffman *asciiHuffman) {
     // After the tree is complete all the symbols are updated
     updateSymbols(asciiHuffman, &nodes[nodes_index - 1], sym, nodes);
 
-    // FIXME remove print
+#ifdef DEBUG_MODE
     printTree(nodes, nodes_index - 1);
+#endif
 }
 
 /**
@@ -244,9 +249,8 @@ void calculateSymbols(HalfASCIIHuffman *asciiHuffman) {
  * @param tree          The array that holds all the nodes
  * @return              The index of the top node
  */
-uint8_t huffmanFromArray(HalfASCIIHuffman *asciiHuffman, HuffmanNode *tree) {
-    uint8_t tree_index = 0;
-    uint16_t len_mask = 0xF;  // mask to get the symbol length
+uint16_t huffmanFromArray(ASCIIHuffman *huffman, HuffmanNode *tree) {
+    uint16_t tree_index = 0;
 
     // Create all the leaf nodes
 //    for (int i = 0; i < 256; ++i) {

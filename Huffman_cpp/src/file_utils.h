@@ -22,7 +22,7 @@ FILE *openBinaryFile(char *filename);
  * @param huffman    The huffman struct that contains the information for the compression
  * @param blockSize  The size of the data that every write operation writes to the file
  */
-void compressFile(FILE *file, char *filename, HalfASCIIHuffman *huffman, uint16_t blockSize);
+void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t blockSize);
 
 
 /**

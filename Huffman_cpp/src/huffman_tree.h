@@ -45,7 +45,7 @@ typedef struct half_ascii_huffman {
      */
     uint64_t charFreq[256];
 
-} HalfASCIIHuffman;
+} ASCIIHuffman;
 
 
 /**
@@ -72,7 +72,17 @@ typedef struct huffman_node{
  * @param file  The file to count the frequencies
  * @param huffman  The huffman struct
  */
-void charFrequency(FILE *file, HalfASCIIHuffman *huffman);
+void charFrequency(FILE *file, ASCIIHuffman *huffman);
+
+
+/**
+ * Prints the huffman tree
+ *
+ * @param nodes        The nodes array of the tree
+ * @param nodes_index  The index of the last node in the tree
+ */
+void printTree(HuffmanNode *nodes, uint16_t nodes_index);
+
 
 /**
  * The main part of the huffman algorithm. This function calculates all the symbols for the characters that exist (have
@@ -80,7 +90,7 @@ void charFrequency(FILE *file, HalfASCIIHuffman *huffman);
  *
  * @param asciiHuffman  The huffman struct with the character frequencies
  */
-void calculateSymbols(HalfASCIIHuffman *asciiHuffman);
+void calculateSymbols(ASCIIHuffman *asciiHuffman);
 
 
 /**
@@ -91,6 +101,6 @@ void calculateSymbols(HalfASCIIHuffman *asciiHuffman);
  * @param tree          The array that holds all the nodes
  * @return              The index of the top node
  */
-uint8_t huffmanFromArray(HalfASCIIHuffman *asciiHuffman, HuffmanNode *tree);
+uint16_t huffmanFromArray(ASCIIHuffman *huffman, HuffmanNode *tree);
 
 #endif //HUFFMAN_TREE

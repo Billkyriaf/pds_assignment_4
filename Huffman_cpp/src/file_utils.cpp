@@ -74,7 +74,7 @@ void insertToBuffer(uint128_t *buffer, int *buff_index, uint8_t *write_index, ui
  * @param file     The compressed file pointer
  * @param huffman  The huffman struct containing all the symbols
  */
-void writeHuffmanToFile(FILE *file, HalfASCIIHuffman *huffman) {
+void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman) {
 
     // Write the symbols with their lengths in the file
     for (Symbol &symbol : huffman->symbols) {
@@ -104,7 +104,7 @@ void writeHuffmanToFile(FILE *file, HalfASCIIHuffman *huffman) {
  * @param huffman    The huffman struct that contains the information for the compression
  * @param blockSize  The size in bytes of the data that every write operation writes to the file. (must be power of 2)
  */
-void compressFile(FILE *file, char *filename, HalfASCIIHuffman *huffman, uint16_t blockSize) {
+void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t blockSize) {
 
     // Create the new file name
     int len = (int) strlen(filename); // Get the length of the old filename
@@ -285,7 +285,7 @@ void decompressFile(char *filename){
     fread(&blockSize, sizeof(blockSize), 1, file);
 
     // Retrieve the huffman info
-    HalfASCIIHuffman huffman;
+    ASCIIHuffman huffman;
 
     for (Symbol &symbol : huffman.symbols) {
         // Read all the symbols from the file
