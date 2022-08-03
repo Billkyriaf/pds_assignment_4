@@ -253,19 +253,75 @@ uint16_t huffmanFromArray(ASCIIHuffman *huffman, HuffmanNode *tree) {
     uint16_t tree_index = 0;
 
     // Create all the leaf nodes
-//    for (int i = 0; i < 256; ++i) {
-//        if (asciiHuffman->symbols[i] != 0){
-//            tree[tree_index].leaf_symbol = asciiHuffman->symbols[i];     // The huffman symbol initially is 0
-//            tree[tree_index].freq = asciiHuffman->symbols[i] & len_mask; // Character frequency is replaced by the length of the symbol
-//            tree[tree_index].ascii_index = i;   // The character
-//            tree[tree_index].isLeaf = true;     // These nodes are the leaf nodes of the tree
-//            tree[tree_index].isInTree = false;  // The node is in the array, but it is not in the tree yet
-//            tree[tree_index].left = -1;         // The index of the left child is -1 because there is no left child
-//            tree[tree_index].right = -1;        // The index of the right child is -1 because there is no right child
-//
-//            tree_index++;  // increment the index
-//        }
-//    }
+    for (int i = 0; i < 256; ++i) {
+        tree[tree_index].leaf_symbol = huffman->symbols[i];     // The huffman symbol initially is 0
+        tree[tree_index].ascii_index = i;   // The character
+        tree[tree_index].isLeaf = true;     // These nodes are the leaf nodes of the tree
+        tree[tree_index].isInTree = false;  // The node is in the array, but it is not in the tree yet
+        tree[tree_index].left = -1;         // The index of the left child is -1 because there is no left child
+        tree[tree_index].right = -1;        // The index of the right child is -1 because there is no right child
 
-    // Find the two nodes with the biggest symbols
+        tree_index++;  // increment the index
+    }
+
+    uint16_t ind1;  // index of the first child node
+    uint16_t ind2;  // index of the second child node
+    uint8_t max_l;  // the length of the biggest symbol
+
+    do {
+        // reset the values
+        ind1 = 0xffff;  // No node with index 0xffff can exist
+        ind2 = 0xffff;
+        max_l = 0;
+
+        // find the symbol with the maximum length
+        for (int i = 0; i < tree_index; ++i) {
+            if (!tree[i].isInTree){
+                if (tree[i].leaf_symbol.symbol_length > max_l) {
+                    max_l = tree[i].leaf_symbol.symbol_length;
+                    ind1 = i;
+                }
+            }
+        }
+
+        // Find the neighbour symbol. The neighbor symbol has the same length and only differs on the last bit
+        for (int i = 0; i < tree_index; ++i) {
+            if (!tree[i].isInTree && i != ind1 && tree[i].leaf_symbol.symbol_length == max_l) {
+                if ((tree[ind1].leaf_symbol.symbol >> 1) == (tree[i].leaf_symbol.symbol >> 1)) {
+                    ind2 = i;
+                    break;  // once the symbol is found break the loop
+                }
+            }
+        }
+
+        /*
+         * The parent node has a hypothetical symbol that is 1 bit less than it's children.
+         * The bit missing is thew last bit of the children's symbol
+         */
+        tree[tree_index].leaf_symbol.symbol = tree[ind1].leaf_symbol.symbol >> 1;
+        tree[tree_index].leaf_symbol.symbol_length = tree[ind1].leaf_symbol.symbol_length - 1;
+
+        tree[tree_index].isLeaf = false;     // This is not a leaf node
+        tree[tree_index].isInTree = false;   // The node is in the array, but it is not in the tree yet
+
+        if (ind2 != 0xffff) {
+            if (tree[ind1].leaf_symbol.symbol < tree[ind2].leaf_symbol.symbol) {
+                tree[tree_index].left = ind1;   // The index of the left child is the index of the node with the smaller symbol
+                tree[tree_index].right = ind2;  // The index of the right child is the index of the node with the bigger symbol
+
+            } else {
+                tree[tree_index].left = ind2;   // The index of the left child is the index of the node with the smaller symbol
+                tree[tree_index].right = ind1;  // The index of the right child is the index of the node with the bigger symbol
+            }
+
+            // put the two nodes in the tree
+            tree[ind1].isInTree = true;
+            tree[ind2].isInTree = true;
+        }
+
+        tree_index++;
+    } while (tree[tree_index - 1].leaf_symbol.symbol_length != 0);  // The only node with symbol length 0 is the root node
+
+    // The return value is the index of the root node
+    return tree_index - 1;
 }
