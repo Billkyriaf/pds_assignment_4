@@ -395,6 +395,62 @@ void decompressFile(char *filename){
     printTree(nodes, root_index);
 #endif
 
+    /*
+     * Start reading the file from start to finish. Reading one bit at a time and navigating the tree until a leaf node
+     * is reached.
+     */
+    uint16_t buffer_size = block_size / SYM_BUFF_SIZE;
+
+    /*
+     * The buffer holds the data to be written to the file. Once the buffer is full the data are written to the file
+     * and the buffer is overwritten with the next part of data. The process repeats until the end
+     */
+    auto *buffer = (uint128_t *) calloc(buffer_size, sizeof(uint128_t));
+
+
+    uint8_t char_buffer[CHAR_BUFF_SIZE];    // The decompressed character
+    uint32_t c_index = 0;         // The character buffer index
+
+    HuffmanNode node = nodes[root_index];  // The current node of the tree.
+
+    // If the file has only one block skip to the final block handling
+    if (n_blocks > 1) {
+        // For all the blocks in the file except the last one...
+        do {
+            // read the symbol bits from the compressed file
+            fread(&buffer[0], sizeof(buffer[0].lower()), buffer_size * 2, file);
+
+            // decode the buffer
+            decodeBuffer(nodes, root_index, &node, buffer, 0, buffer_size, SYM_BUFF_SIZE,
+                         char_buffer, &c_index, decompressed);
+
+            // Update the remaining blocks number
+            n_blocks--;
+
+        } while (n_blocks != 1);
+    }
+
+    // The last block may contain padding bits that shouldn't be interpreted as symbols
+    fread(&buffer[0], sizeof(buffer[0].lower()), buffer_size * 2, file);  // Read the last block
+
+    // Get the number of full elements of the buffer
+    buffer_size -= nPaddingBits / SYM_BUFF_SIZE;
+
+    // decode the buffer except the last buffer element
+    decodeBuffer(nodes, root_index, &node, buffer, 0, buffer_size - 1, SYM_BUFF_SIZE,
+                 char_buffer, &c_index, decompressed);
+
+    // The last element that contains symbol bits may contain some padding bits also
+    // The number of symbol bits on the last element of the buffer
+    uint8_t useful_bits = SYM_BUFF_SIZE - nPaddingBits % SYM_BUFF_SIZE;
+
+    // decode the last element of the buffer
+    decodeBuffer(nodes, root_index, &node, buffer, buffer_size - 1, buffer_size, useful_bits,
+                 char_buffer, &c_index, decompressed);
+
+    // Write the remaining chars
+    fwrite(char_buffer, sizeof(char_buffer[0]), c_index, decompressed);
+
     fclose(decompressed);
     fclose(file);
 }
