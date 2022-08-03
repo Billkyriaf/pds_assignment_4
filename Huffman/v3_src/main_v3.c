@@ -1,8 +1,6 @@
 #include <stdio.h>
 
 #include "file_utils_v3.h"
-#include "huffman_tree_v3.h"
-
 
 int main() {
 
@@ -16,7 +14,7 @@ int main() {
         huffman.symbols[i].symbol = 0;
     }
 
-    FILE *file = openBinaryFile("../data/test_3");
+    FILE *file = openBinaryFile("../data/test_2");
 
     charFrequency(file, &huffman);
 
@@ -27,7 +25,7 @@ int main() {
         printf("%lu, ", huffman.charFreq[i]);
     }
 
-    printf("%lu", huffman.charFreq[15]);
+    printf("%lu\n\n", huffman.charFreq[15]);
 
     calculateSymbols(&huffman);
 
@@ -39,8 +37,8 @@ int main() {
     }
 
 
-    compressFile(file, "../data/test_3", &huffman, 1024);
-    decompressFile("../data/test_3.huff");
+    compressFile(file, "../data/test_2", &huffman, 1024);
+    decompressFile("../data/test_2.huff");
     fclose(file);
     return 0;
 }

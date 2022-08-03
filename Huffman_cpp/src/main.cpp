@@ -18,7 +18,7 @@ int main() {
         huffman.symbols[i].symbol = 0;
     }
 
-    FILE *file = openBinaryFile("../data/test_4");
+    FILE *file = openBinaryFile("../data/test_3");
 
     cout << "Calculating frequencies..." << endl;
     charFrequency(file, &huffman);
@@ -48,9 +48,11 @@ int main() {
 #endif
 
     cout << "Compressing file..." << endl;
+    compressFile(file, "../data/test_3", &huffman, 8192 * 4);
 
     cout << "Decompressing file..." << endl;
-    decompressFile("../data/test_4.huff");
+    decompressFile("../data/test_3.huff");
+
     fclose(file);
     return 0;
 }
