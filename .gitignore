@@ -1,6 +1,8 @@
-**/.vscode/
-**/build/
-**/.idea/
+**/.vscode/*
+**/build/*
+**/.idea/*
+**.cmak-build-debug/*
+old_code/*
 
 latex/template.synctex.gz
 
