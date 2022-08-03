@@ -254,6 +254,54 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
  * @param c_index        The index of the character buffer
  * @param decompressed   The pointer of the decompressed file
  */
+inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *node, uint128_t *buffer, uint16_t buffer_start,
+                  uint16_t buffer_size, uint8_t element_size, uint8_t *char_buffer, uint32_t *c_index,
+                  FILE *decompressed){
+
+    uint128_t bit = 0;  // The current bit of the symbol
+
+    uint128_t bit_mask = 1;      // The mask that gives the next bit
+    bit_mask = bit_mask << (SYM_BUFF_SIZE - 1);  // The mask starts from the beginning of the buffer 10000000000....
+
+    // iterate the buffer from start to finish
+    for (uint16_t i = buffer_start; i < buffer_size; ++i) {
+        for (uint8_t j = 0; j < element_size; ++j) {
+            bit = buffer[i] & bit_mask;  // get the next bit of the symbol
+            bit_mask = bit_mask >> 1;  // Advance the mask to the next bit
+
+            if (bit == 0) { // If the bit is 0 take the left path of the tree
+                *node = nodes[node->left];
+
+            } else { // Else the bit is 1 and we take the right path of the tree
+                *node = nodes[node->right];
+            }
+
+            // If the new node is a leaf node, then the symbol is complete
+            if (node->isLeaf) {
+                char_buffer[*c_index] = node->ascii_index;  // store the character in the char buffer
+                *c_index += 1;  // increment the char_buffer index
+
+                // If the char buffer is full ...
+                if (*c_index == CHAR_BUFF_SIZE) {
+                    // ...write the characters to the decompressed file ...
+                    fwrite(char_buffer, sizeof(char_buffer[0]), *c_index, decompressed);
+
+                    // ... and reset the index
+                    *c_index = 0;
+                }
+
+                // Go to the start of the tree from the next symbol
+                *node = nodes[root_index];
+            }
+        }
+
+        // reset the bit mask
+        bit_mask = 1;
+        bit_mask = bit_mask << (SYM_BUFF_SIZE - 1);
+    }
+}
+
+
 /**
  * Decompresses a file. The steps to decompress the file are the following:
  *
