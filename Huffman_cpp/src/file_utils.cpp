@@ -4,7 +4,10 @@
 
 #include "file_utils.h"
 
+//#define DEBUG_MODE
+
 using namespace std;
+
 
 /**
  * Opens a file in binary format for reading
@@ -22,6 +25,7 @@ FILE *openBinaryFile(char *filename) {
 
     return file;
 }
+
 
 /**
  * A symbol is inserted in the buffer. If the buffer is full after the insertion the buffer is written to the compressed
@@ -278,6 +282,9 @@ void decompressFile(char *filename){
 
     // The block size used to group data during the compression
     uint16_t blockSize = 0;
+#ifdef DEBUG_MODE
+    cout << "    Reading metadata..." << endl;
+#endif
 
     // Read the numbers from the file
     fread(&nPaddingBits, sizeof(nPaddingBits), 1, file);
@@ -293,16 +300,24 @@ void decompressFile(char *filename){
         fread(&symbol.symbol_length, sizeof(huffman.symbols[0].symbol_length), 1, file);
     }
 
-    //********************************
-    cout << "\n\nPadding bits: " << nPaddingBits << ", Blocks: " << nBlocks << ", block size: " << blockSize << endl;
+#ifdef DEBUG_MODE
+    cout << "\n\nPadding bits: " << nPaddingBits << ", Blocks: " << n_blocks << ", block size: " << block_size << endl;
     cout << "\nRead Huffman symbols:" << endl;
 
     // Print the symbol array
     for (auto & symbol : huffman.symbols) {
         cout << "len: " << unsigned(symbol.symbol_length) << ", sym: " << hex << symbol.symbol << dec << endl;
     }
+#endif
 
-    //********************************
+    // The huffman tree
+    HuffmanNode nodes[511];
+    uint16_t root_index = huffmanFromArray(&huffman, nodes);
+
+#ifdef DEBUG_MODE
+    cout << "Created tree:" << endl;
+    printTree(nodes, root_index);
+#endif
 
     fclose(decompressed);
     fclose(file);

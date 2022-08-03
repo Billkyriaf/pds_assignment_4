@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "file_utils.h"
-#include "huffman_tree.h"
+//#define DEBUG_MODE
 
 
 using namespace std;
@@ -20,28 +20,36 @@ int main() {
 
     FILE *file = openBinaryFile("../data/test_4");
 
+    cout << "Calculating frequencies..." << endl;
     charFrequency(file, &huffman);
 
-    printf("Characters frequency: \n");
+#ifdef DEBUG_MODE
+    cout << "Characters frequency: " << endl;
 
     // Print the frequency array
     for (int i = 0; i < 255; ++i) {
-        printf("%lu, ", huffman.charFreq[i]);
+        cout << huffman.charFreq[i] << ", ";
     }
 
-    printf("%lu", huffman.charFreq[255]);
+    cout <<  huffman.charFreq[255] << endl;
+#endif
+
+    cout << "Calculating symbols..." << endl;
 
     calculateSymbols(&huffman);
 
-    printf("\n\nHuffman symbols: \n");
+#ifdef DEBUG_MODE
+    cout << "\n\nHuffman symbols: \n" << endl;
 
     // Print the symbol array
     for (Symbol &symbol : huffman.symbols) {
         cout << "len: " << unsigned(symbol.symbol_length) << ", sym: " << hex << symbol.symbol << dec << endl;
     }
+#endif
 
+    cout << "Compressing file..." << endl;
 
-    compressFile(file, "../data/test_4", &huffman, 8192);
+    cout << "Decompressing file..." << endl;
     decompressFile("../data/test_4.huff");
     fclose(file);
     return 0;
