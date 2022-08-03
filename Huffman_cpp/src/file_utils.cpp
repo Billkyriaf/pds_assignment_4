@@ -96,13 +96,12 @@ void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman) {
  * Takes the file to be compressed reads the bits and creates a new compressed file. The compressed file has the
  * following format:
  *
- *      Byte 0:3      The number of the padding bits added to the end of the file (uint32_t)
- *      Byte 4:7      The number of blocks in the file (uint32_t)
- *      Byte 8:9      The block size used to group data (uint16_t)
- *      Byte 10:..    The huffman table used to compress the file. The symbols have variable length so after every
- *                    symbol the length of it is written (uint256_t). All the symbols written in the file are the same
- *                    number of bytes (uint16_t). The total number of symbols is 16
- *      Byte ..:end   The compressed data
+ *      Byte 0:3       The number of the padding bits added to the end of the file (uint32_t)
+ *      Byte 4:7       The number of blocks in the file (uint32_t)
+ *      Byte 8:9       The block size used to group data (uint16_t)
+ *      Byte 10:8457   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
+ *                     by the symbol are written as well as an 8 bit number. The size of the table is 256 x (256 + 8) bits
+ *      Byte 8457:end  The compressed data
  *
  * @param file       The original file
  * @param filename   The filename of the compressed file
@@ -238,8 +237,44 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
     fclose(compressed);
 }
 
+
 /**
- * Decompresses a file
+ * Decodes a buffer of symbol bits using the huffman tree. If the character buffer is full it is written in the
+ * decompressed file. The function is inlined because for large files it is called multiple times adding a memory
+ * transfer overhead.
+ *
+ * @param nodes          The huffman tree array
+ * @param root_index     The index of the root node of the tree
+ * @param node           The pointer to the current node
+ * @param buffer         The symbol buffer
+ * @param buffer_start   The starting index of the buffer
+ * @param buffer_size    The buffer size (length)
+ * @param element_size   The number of bits per buffer element
+ * @param char_buffer    The character buffer
+ * @param c_index        The index of the character buffer
+ * @param decompressed   The pointer of the decompressed file
+ */
+/**
+ * Decompresses a file. The steps to decompress the file are the following:
+ *
+ *   Step 1: Read the meta data from of the file.
+ *
+ *           Byte 0:3       The number of the padding bits added to the end of the file (uint32_t)
+ *
+ *           Byte 4:7       The number of blocks in the file (uint32_t)
+ *
+ *           Byte 8:9       The block size used to group data (uint16_t)
+ *
+ *           Byte 10:8457   The huffman table used to compress the file. After every 256 bit symbol the number of bits
+ *                          used by the symbol are written as well as an 8 bit number.
+ *                          The size of the table is 256 x (256 + 8) bits
+ *
+ *           Byte 8457:end  The compressed data
+ *
+ *   Step 2: Create the Huffman tree from the huffman table
+ *
+ *   Step 3: Decode the symbols to characters and write them to the decompressed file
+ *
  * @param filename  The name of the file to be decompressed
  */
 void decompressFile(char *filename){
@@ -266,14 +301,6 @@ void decompressFile(char *filename){
     }
 
     free(newFilename);  // free the no longer needed memory
-
-
-    // Start decompressing the file
-
-    /*
-     * 1. Extract basic data (number of padding bits number of blocks and huffman tree)
-     * 2. Figure a way to decompress the file
-     */
 
     // This is the number of padding bits to the end of the file. The padding bits align the data to bytes.
     uint32_t nPaddingBits = 0;

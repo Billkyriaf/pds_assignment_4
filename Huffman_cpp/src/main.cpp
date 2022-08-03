@@ -9,7 +9,7 @@ using namespace std;
 
 int main() {
     // The huffman struct
-    HalfASCIIHuffman huffman;
+    ASCIIHuffman huffman;
 
     // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {
