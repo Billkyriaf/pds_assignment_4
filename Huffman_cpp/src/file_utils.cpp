@@ -4,6 +4,9 @@
 
 #include "file_utils.h"
 
+#define CHAR_BUFF_SIZE 2048  // The size of the write buffer
+#define SYM_BUFF_SIZE 128   // The size of the read buffer single element
+
 //#define DEBUG_MODE
 
 using namespace std;
@@ -48,7 +51,7 @@ void insertToBuffer(uint128_t *buffer, int *buff_index, uint8_t *write_index, ui
     buffer[*buff_index] += symbol.lower();
 
     if (*write_index + 1 - symbol_length == 0) {  // if the symbol fits exactly...
-        *write_index = 127;  // ... reset the write_index ...
+        *write_index = SYM_BUFF_SIZE - 1;  // ... reset the write_index ...
         *buff_index += 1;  // ... and increment the buffer index
 
         // If the buffer is full...
@@ -148,7 +151,7 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
     // Write the huffman table to the beginning of the file
     writeHuffmanToFile(compressed, huffman);
 
-    uint16_t bufferSize = blockSize / 128;
+    uint16_t bufferSize = blockSize / SYM_BUFF_SIZE;
 
     // The buffer holds the data to be written to the file. Once the buffer is full the data are written to the file
     // and the buffer is overwritten with the next part of data. The process repeats until the end
@@ -164,7 +167,7 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
 
     uint256_t symbol = 0;  // The symbol along with the symbol length of every char
     uint8_t symbol_length = 0;  // The symbol length
-    uint8_t write_index = 127;  // The index of the start point of the symbol in the buffer
+    uint8_t write_index = SYM_BUFF_SIZE - 1;  // The index of the start point of the symbol in the buffer
 
     // The index to the buffer
     int buff_index = 0;
@@ -206,12 +209,15 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
     // The final buffer may not be full. In that case the rest of the block bits will be 0 and will be counted as padding
 
     // if the buffer index is not 0 or the write index is not 7 the last buffer was not full
-    if (buff_index != 0 || write_index != 127) {
-        nPaddingBits += 128 * (bufferSize - buff_index - 1);  // Update the number of padding bits. Every buffer element is 128 bits
+    if (buff_index != 0 || write_index != SYM_BUFF_SIZE - 1) {
+
+        // Update the number of padding bits. Every buffer element is SYM_BUFF_SIZE bits
+        nPaddingBits += SYM_BUFF_SIZE * (bufferSize - buff_index - 1);
 
         // zero the remaining bits in the buffer[buff_index]
-        if (write_index != 127) {
-            // Align the last byte
+        if (write_index != SYM_BUFF_SIZE - 1) {
+
+            // Align the last SYM_BUFF_SIZE bits
             buffer[buff_index] = buffer[buff_index] << (write_index + 1);
 
             nPaddingBits += write_index + 1;  // add the final padding bits
