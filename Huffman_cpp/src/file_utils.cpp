@@ -351,21 +351,22 @@ void decompressFile(char *filename){
     free(newFilename);  // free the no longer needed memory
 
     // This is the number of padding bits to the end of the file. The padding bits align the data to bytes.
-    uint32_t nPaddingBits = 0;
+    uint32_t padding_bits = 0;
 
     // The number of blocks written to the file
-    uint32_t nBlocks = 0;
+    uint32_t n_blocks = 0;
 
     // The block size used to group data during the compression
-    uint16_t blockSize = 0;
+    uint16_t block_size = 0;
+
 #ifdef DEBUG_MODE
     cout << "    Reading metadata..." << endl;
 #endif
 
     // Read the numbers from the file
-    fread(&nPaddingBits, sizeof(nPaddingBits), 1, file);
-    fread(&nBlocks, sizeof(nBlocks), 1, file);
-    fread(&blockSize, sizeof(blockSize), 1, file);
+    fread(&padding_bits, sizeof(padding_bits), 1, file);
+    fread(&n_blocks, sizeof(n_blocks), 1, file);
+    fread(&block_size, sizeof(block_size), 1, file);
 
     // Retrieve the huffman info
     ASCIIHuffman huffman;
@@ -377,7 +378,7 @@ void decompressFile(char *filename){
     }
 
 #ifdef DEBUG_MODE
-    cout << "\n\nPadding bits: " << nPaddingBits << ", Blocks: " << n_blocks << ", block size: " << block_size << endl;
+    cout << "\n\nPadding bits: " << padding_bits << ", Blocks: " << n_blocks << ", block size: " << block_size << endl;
     cout << "\nRead Huffman symbols:" << endl;
 
     // Print the symbol array
@@ -434,7 +435,7 @@ void decompressFile(char *filename){
     fread(&buffer[0], sizeof(buffer[0].lower()), buffer_size * 2, file);  // Read the last block
 
     // Get the number of full elements of the buffer
-    buffer_size -= nPaddingBits / SYM_BUFF_SIZE;
+    buffer_size -= padding_bits / SYM_BUFF_SIZE;
 
     // decode the buffer except the last buffer element
     decodeBuffer(nodes, root_index, &node, buffer, 0, buffer_size - 1, SYM_BUFF_SIZE,
@@ -442,7 +443,7 @@ void decompressFile(char *filename){
 
     // The last element that contains symbol bits may contain some padding bits also
     // The number of symbol bits on the last element of the buffer
-    uint8_t useful_bits = SYM_BUFF_SIZE - nPaddingBits % SYM_BUFF_SIZE;
+    uint8_t useful_bits = SYM_BUFF_SIZE - padding_bits % SYM_BUFF_SIZE;
 
     // decode the last element of the buffer
     decodeBuffer(nodes, root_index, &node, buffer, buffer_size - 1, buffer_size, useful_bits,
