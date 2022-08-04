@@ -6,3 +6,8 @@ set(CMAKE_CXX_FLAGS "-O3")
 
 add_executable(Huffman libs/uint128_t.cpp libs/uint256_t.cpp src/serial/main.cpp
         src/serial/huffman_tree.cpp src/serial/file_utils.cpp)
+
+add_executable(HuffmanPthread libs/uint128_t.cpp libs/uint256_t.cpp src/pthread/main_pthread.cpp
+        src/pthread/huffman_tree_pthread.cpp src/pthread/file_utils_pthread.cpp)
+
+target_link_libraries(HuffmanPthread pthread)
