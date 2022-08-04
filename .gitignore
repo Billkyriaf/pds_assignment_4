@@ -13,3 +13,7 @@ latex/template.fdb_latexmk
 latex/template.fls
 
 latex/template.log
+
+proj-pthreads-vs-cilk.pdf
+
+Huffman_SAP_on_IBM_Z.pdf
