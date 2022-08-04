@@ -8,41 +8,37 @@
 
 
 /**
- * Counts the character frequency of every ascii char of the file being compressed. The ascii characters are 8 bits long
- * This produces potentially long symbols that are hard to manage. For this reason every char is split in two 4 bit parts
- * This produces 16 different chars and a maximum length of huffman symbols of 15.
+ * Counts the character frequency of every ascii char of the file being compressed. The file is simultaneously handled
+ * by multiple threads each having it's own handler. Every thread reads and counts a different part of the file, from
+ * start_byte to end byte
  *
- * Since the number of different characters is low the huffman tree can be calculated for all the characters even if they
- * are not present. This allows to measure the frequency of the characters on a small part of the file and assume the
- * file is relatively consistent. The larger the area of the file accounted the more accurate the results but the longer
- * it takes to measure
- *
- * @param file     The file to count the frequencies
- * @param huffman  The huffman struct
+ * @param file           The file to count the frequencies
+ * @param frequency_arr  The frequency array of the characters
+ * @param start_byte     The byte (inclusive, measuring from 0) from where to start counting in the file
+ * @param end_byte       The byte (exclusive, measuring from 0) to where to stop counting in the file
  */
-void charFrequency(FILE *file, ASCIIHuffman *huffman) {
+void charFrequency(FILE *file, uint64_t *frequency_arr, uint64_t start_byte, uint64_t end_byte) {
 
     uint8_t c;  // The character read from the file
 
-    fseek(file, 0, SEEK_END);  // Jump to the end of the file
-    unsigned long int file_len = ftell(file);  // Get the current byte offset in the file
+    fseek(file, (long)start_byte, SEEK_SET);  // Jump to the beginning of the section to count
 
-    rewind(file);  // Jump back to the beginning of the file
+    uint64_t file_len = end_byte - start_byte;  // The number of bytes to read from the file
 
-    unsigned long int scan_size;
+/*    unsigned long int scan_size;
 
     // Determine the scan_size of the file
     if (file_len > SCAN_SIZE)
         scan_size = SCAN_SIZE;
     else
-        scan_size = file_len;
+        scan_size = file_len;*/
 
     // Read from the file byte by byte
-    for (unsigned long int i = 0; i < scan_size; ++i) {
+    for (uint64_t i = 0; i < file_len; ++i) {
         fread(&c, sizeof(c), 1, file);
 
         // For every half char read update the frequency
-        huffman->charFreq[c]++;
+        frequency_arr[c]++;
     }
 }
 
