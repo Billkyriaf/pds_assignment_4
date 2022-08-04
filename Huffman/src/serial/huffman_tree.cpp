@@ -2,7 +2,7 @@
 #include <cmath>
 #include "huffman_tree.h"
 
-#define SCAN_SIZE 200 * 1024 * 1024 // * 1024  // 200MB
+#define SCAN_SIZE 1 * 1024 * 1024 * 1024  // 1GB
 //#define DEBUG_MODE
 
 
@@ -28,13 +28,13 @@ void charFrequency(FILE *file, ASCIIHuffman *huffman) {
 
     rewind(file);  // Jump back to the beginning of the file
 
-    unsigned long int scan_size;
+    uint64_t scan_size = file_len;
 
-    // Determine the scan_size of the file
+/*    // Determine the scan_size of the file
     if (file_len > SCAN_SIZE)
         scan_size = SCAN_SIZE;
     else
-        scan_size = file_len;
+        scan_size = file_len;*/
 
     // Read from the file byte by byte
     for (unsigned long int i = 0; i < scan_size; ++i) {
