@@ -2,6 +2,8 @@
 #include <iostream>
 
 #include "file_utils.h"
+#include "huffman_tree.h"
+
 //#define DEBUG_MODE
 
 
@@ -36,7 +38,7 @@ int main() {
 
     cout << "Calculating symbols..." << endl;
 
-    calculateSymbols(&huffman);
+    createHuffmanTree(&huffman);
 
 #ifdef DEBUG_MODE
     cout << "\n\nHuffman symbols: \n" << endl;

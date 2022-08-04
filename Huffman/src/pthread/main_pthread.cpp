@@ -3,6 +3,7 @@
 #include <pthread.h>
 
 #include "file_utils_pthread.h"
+#include "huffman_tree_pthread.h"
 
 #define DEBUG_MODE
 #define N_THREADS 4
@@ -151,7 +152,7 @@ int main() {
 
     cout << "Calculating symbols..." << endl;
 
-    calculateSymbols(&huffman);
+    createHuffmanTree(&huffman);
 
 #ifdef DEBUG_MODE
     cout << "\n\nHuffman symbols: \n" << endl;

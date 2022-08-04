@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+
 #include "huffman_tree.h"
 
 #define SCAN_SIZE 1 * 1024 * 1024 * 1024  // 1GB
@@ -164,7 +165,7 @@ void updateSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol sym
  * a frequency of more than 1)
  * @param asciiHuffman  The huffman struct with the character frequencies
  */
-void calculateSymbols(ASCIIHuffman *asciiHuffman) {
+void createHuffmanTree(ASCIIHuffman *asciiHuffman) {
     /*
      * The maximum nodes a huffman tree with 16 different symbols can have is 31. The nodes array holds all the nodes
      * of the tree. The symbols are updated as the tree builds.

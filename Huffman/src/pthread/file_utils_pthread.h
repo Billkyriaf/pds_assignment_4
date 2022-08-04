@@ -1,9 +1,9 @@
-#ifndef FILE_UTILS_H
-#define FILE_UTILS_H
+#ifndef FILE_UTILS_PTH_H
+#define FILE_UTILS_PTH_H
 
 #include <cstdio>
-#include "huffman_tree_pthread.h"
 
+#include "../structs.h"
 
 /**
  * Opens a file in binary format for reading
@@ -32,4 +32,4 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
  */
 void decompressFile(char *filename);
 
-#endif //FILE_UTILS_H
+#endif //FILE_UTILS_PTH_H

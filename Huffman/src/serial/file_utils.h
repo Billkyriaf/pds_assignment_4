@@ -2,7 +2,8 @@
 #define FILE_UTILS_H
 
 #include <cstdio>
-#include "huffman_tree.h"
+
+#include "../structs.h"
 
 
 /**

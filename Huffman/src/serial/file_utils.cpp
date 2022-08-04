@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "file_utils.h"
+#include "huffman_tree.h"
 
 #define CHAR_BUFF_SIZE 2048  // The size of the write buffer
 #define SYM_BUFF_SIZE 128   // The size of the read buffer single element
