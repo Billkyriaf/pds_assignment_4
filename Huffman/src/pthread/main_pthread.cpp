@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <iostream>
 #include <pthread.h>
+#include "../../include/timer/timer.h"
 
 #include "file_utils_pthread.h"
 #include "huffman_tree_pthread.h"
@@ -123,6 +124,9 @@ void calculateFrequency(FILE *file, ASCIIHuffman *huffman){
 
 
 int main() {
+    // Timer used to measure execution time
+    Timer timer;
+
     // The huffman struct
     ASCIIHuffman huffman;
 
@@ -136,8 +140,12 @@ int main() {
     // The main thread also opens the file
     FILE *file = openBinaryFile("../data/test_5");
 
+    startTimer(&timer);
+
     // Calculate the frequency of the characters
     calculateFrequency(file, &huffman);
+
+    stopTimer(&timer);
 
 #ifdef DEBUG_MODE
     cout << "Characters frequency: " << endl;
@@ -148,6 +156,9 @@ int main() {
     }
 
     cout <<  huffman.charFreq[255] << endl;
+
+    cout << "\nFrequency elapsed time: ";
+    displayElapsed(&timer);
 #endif
 
     cout << "Calculating symbols..." << endl;
