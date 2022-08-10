@@ -3,7 +3,7 @@
 
 #include <cstdio>
 
-#include "../structs.h"
+#include "../../include/structs.h"
 
 /**
  * Opens a file in binary format for reading

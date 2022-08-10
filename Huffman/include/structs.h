@@ -3,7 +3,7 @@
 
 #include <cinttypes>
 
-#include "../libs/uint256_t.h"
+#include "uint256/uint256_t.h"
 
 /**
  * This is a single symbol for an ascii character. Every character is 4bits long. That means there are 16 different

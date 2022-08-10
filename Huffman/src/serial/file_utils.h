@@ -3,7 +3,7 @@
 
 #include <cstdio>
 
-#include "../structs.h"
+#include "../../include/structs.h"
 
 
 /**

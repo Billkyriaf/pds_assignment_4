@@ -3,7 +3,7 @@
 
 #include <cstdio>
 
-#include "../structs.h"
+#include "../../include/structs.h"
 
 /**
  * Counts the character frequency of every ascii char of the file being compressed. The file is simultaneously handled
