@@ -7,18 +7,18 @@
 #include "huffman_tree_pthread.h"
 
 #define DEBUG_MODE
-#define N_THREADS 4
+#define N_THREADS 16
 
 using namespace std;
 
-typedef struct freq_args{
+typedef struct freq_args {
     int t_id;
     uint64_t *freq_arr;
 
     uint64_t start_byte;
     uint64_t end_byte;
 
-}FreqArgs;
+} FreqArgs;
 
 
 /**
@@ -27,12 +27,12 @@ typedef struct freq_args{
  * @param args FreqArgs struct containing the arguments of the function
  * @return
  */
-void *frequencyRunnable(void *args){
+void *frequencyRunnable(void *args) {
     // Type cast the arguments
-    auto *arguments = (FreqArgs *)args;
+    auto *arguments = (FreqArgs *) args;
 
     // Each thread creates it's own file handler
-    FILE *file = openBinaryFile("../data/test_5");
+    FILE *file = openBinaryFile("../data/test_2");
 
     // Count the frequencies of the part of the file assigned
     charFrequency(file, arguments->freq_arr, arguments->start_byte, arguments->end_byte);
@@ -50,7 +50,7 @@ void *frequencyRunnable(void *args){
  * @param file     The input file (to be compressed)
  * @param huffman  The huffman struct
  */
-void calculateFrequency(FILE *file, ASCIIHuffman *huffman){
+void calculateFrequency(FILE *file, ASCIIHuffman *huffman) {
     // Get the file length
     fseek(file, 0, SEEK_END);  // Jump to the end of the file
     uint64_t file_len = ftell(file);  // Get the current byte offset in the file
@@ -71,7 +71,7 @@ void calculateFrequency(FILE *file, ASCIIHuffman *huffman){
     uint64_t last_b_per_thr;  // The number of bytes the first thread will process
 
     // Determine the bytes each thread will process
-    if (file_len % N_THREADS == 0){
+    if (file_len % N_THREADS == 0) {
         b_per_thr = last_b_per_thr = file_len / N_THREADS;
 
     } else {
@@ -107,12 +107,16 @@ void calculateFrequency(FILE *file, ASCIIHuffman *huffman){
     }
 
     // Join all the threads
-    for (unsigned long thread : threads) {
+    for (unsigned long thread: threads) {
         pthread_join(thread, nullptr);
     }
 
+#ifdef DEBUG_MODE
+    cout << "Accumulating..." << endl;
+#endif
+
     // Accumulate all the frequencies
-    for (auto & frequency : frequencies) {
+    for (auto &frequency: frequencies) {
         for (int j = 0; j < 256; ++j) {
             huffman->charFreq[j] += frequency[j];
         }
@@ -138,7 +142,7 @@ int main() {
     }
 
     // The main thread also opens the file
-    FILE *file = openBinaryFile("../data/test_5");
+    FILE *file = openBinaryFile("../data/test_2");
 
     startTimer(&timer);
 
@@ -155,7 +159,7 @@ int main() {
         cout << huffman.charFreq[i] << ", ";
     }
 
-    cout <<  huffman.charFreq[255] << endl;
+    cout << huffman.charFreq[255] << endl;
 
     cout << "\nFrequency elapsed time: ";
     displayElapsed(&timer);
@@ -169,16 +173,18 @@ int main() {
     cout << "\n\nHuffman symbols: \n" << endl;
 
     // Print the symbol array
-    for (Symbol &symbol : huffman.symbols) {
+    for (Symbol &symbol: huffman.symbols) {
         cout << "len: " << unsigned(symbol.symbol_length) << ", sym: " << hex << symbol.symbol << dec << endl;
     }
 #endif
 
+    return 0;
+
     cout << "Compressing file..." << endl;
-    compressFile(file, "../data/test_5", &huffman, 8192 * 4);
+    compressFile(file, "../data/test_2", &huffman, 8192 * 4);
 
     cout << "Decompressing file..." << endl;
-    decompressFile("../data/test_5.huff");
+    decompressFile("../data/test_2.huff");
 
     fclose(file);
     return 0;
