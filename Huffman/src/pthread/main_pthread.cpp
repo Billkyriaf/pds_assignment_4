@@ -30,6 +30,12 @@ int main(int argc, char **argv) {
         huffman.symbols[i].symbol = 0;
     }
 
+    for (int i = 0; i < N_THREADS; ++i) {
+        for (int j = 0; j < 255; ++j) {
+            huffman.frequencies[i][j] = 0;
+        }
+    }
+
     startTimer(&overall_timer);
 
     cout << "Calculating frequencies..." << endl;
