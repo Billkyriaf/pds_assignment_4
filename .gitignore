@@ -2,6 +2,7 @@
 **/build/*
 **/.idea/*
 **.cmak-build-debug/*
+**/make_build/*
 old_code/*
 
 latex/template.synctex.gz
@@ -17,3 +18,9 @@ latex/template.log
 proj-pthreads-vs-cilk.pdf
 
 Huffman_SAP_on_IBM_Z.pdf
+
+test_code/
+
+Huffman/profiling/
+
+Huffman/archived_code/huffman_tree_pthread_v2.cpp
