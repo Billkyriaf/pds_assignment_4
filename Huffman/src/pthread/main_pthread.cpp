@@ -11,7 +11,7 @@
 
 using namespace std;
 
-typedef struct freq_args {
+int main(int argc, char **argv) {
     int t_id;
     uint64_t *freq_arr;
 
@@ -130,6 +130,7 @@ void calculateFrequency(FILE *file, ASCIIHuffman *huffman) {
 int main() {
     // Timer used to measure execution time
     Timer timer;
+    Timer overall_timer;
 
     // The huffman struct
     ASCIIHuffman huffman;
@@ -141,8 +142,9 @@ int main() {
         huffman.symbols[i].symbol = 0;
     }
 
-    // The main thread also opens the file
-    FILE *file = openBinaryFile("../data/test_2");
+    startTimer(&overall_timer);
+
+    cout << "Calculating frequencies..." << endl;
 
     startTimer(&timer);
 
@@ -150,6 +152,9 @@ int main() {
     calculateFrequency(file, &huffman);
 
     stopTimer(&timer);
+
+    cout << "Frequency elapsed time: ";
+    displayElapsed(&timer);
 
 #ifdef DEBUG_MODE
     cout << "Characters frequency: " << endl;
@@ -160,14 +165,18 @@ int main() {
     }
 
     cout << huffman.charFreq[255] << endl;
-
-    cout << "\nFrequency elapsed time: ";
-    displayElapsed(&timer);
 #endif
 
     cout << "Calculating symbols..." << endl;
 
+    startTimer(&timer);
+
     createHuffmanTree(&huffman);
+
+    stopTimer(&timer);
+
+    cout << "Symbols elapsed time: ";
+    displayElapsed(&timer);
 
 #ifdef DEBUG_MODE
     cout << "\n\nHuffman symbols: \n" << endl;
@@ -178,14 +187,33 @@ int main() {
     }
 #endif
 
+    cout << "Compressing file..." << endl;
+
+    startTimer(&timer);
+    stopTimer(&timer);
+
+    cout << "Compression elapsed time: ";
+    displayElapsed(&timer);
     return 0;
 
     cout << "Compressing file..." << endl;
     compressFile(file, "../data/test_2", &huffman, 8192 * 4);
 
     cout << "Decompressing file..." << endl;
-    decompressFile("../data/test_2.huff");
 
-    fclose(file);
+    startTimer(&timer);
+
+    decompressFile(output_file_name);
+
+    stopTimer(&timer);
+
+    cout << "Decompression elapsed time: ";
+    displayElapsed(&timer);
+
+    stopTimer(&overall_timer);
+
+    cout << "Overall elapsed time: ";
+    displayElapsed(&overall_timer);
+
     return 0;
 }
