@@ -1,8 +1,9 @@
 #include <iostream>
+#include <pthread.h>
 
 #include "huffman_tree_pthread.h"
 
-#define SCAN_SIZE 200 * 1024 * 1024 // * 1024  // 200MB
+#define SCAN_SIZE (2 * 1024 * 1024) // 2 MB
 //#define DEBUG_MODE
 
 
@@ -24,16 +25,16 @@ void charFrequency(FILE *file, uint64_t *frequency_arr, uint64_t start_byte, uin
 
     uint64_t file_len = end_byte - start_byte;  // The number of bytes to read from the file
 
-/*    unsigned long int scan_size;
+    unsigned long int scan_size = file_len;
 
-    // Determine the scan_size of the file
+    /*// Determine the scan_size of the file
     if (file_len > SCAN_SIZE)
         scan_size = SCAN_SIZE;
     else
         scan_size = file_len;*/
 
     // Read from the file byte by byte
-    for (uint64_t i = 0; i < file_len; ++i) {
+    for (uint64_t i = 0; i < scan_size; ++i) {
         fread(&c, sizeof(c), 1, file);
 
         // For every half char read update the frequency
@@ -162,10 +163,12 @@ void updateSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol sym
  */
 void createHuffmanTree(ASCIIHuffman *asciiHuffman) {
     /*
-     * The maximum nodes a huffman tree with 16 different symbols can have is 31. The nodes array holds all the nodes
+     * The maximum nodes a huffman tree with 256 different symbols can have is 511. The nodes array holds all the nodes
      * of the tree. The symbols are updated as the tree builds.
+     *
+     * The array is allocated so it can be accessed out of the scope of the function
      */
-    HuffmanNode nodes[511];
+    auto *nodes = (HuffmanNode *)malloc(511 * sizeof(HuffmanNode));
     uint16_t nodes_index;  // The index of the last node inserted
 
     // Init the array with the leaf nodes
@@ -175,6 +178,7 @@ void createHuffmanTree(ASCIIHuffman *asciiHuffman) {
     uint16_t remaining_nodes = nodes_index;
 
     // find the nodes with the two smallest frequencies in the nodes array.
+
 
     while (remaining_nodes > 1) {
 
@@ -235,6 +239,9 @@ void createHuffmanTree(ASCIIHuffman *asciiHuffman) {
 #ifdef DEBUG_MODE
     printTree(nodes, nodes_index - 1);
 #endif
+
+    // free the memory
+    free(nodes);  // Free the nodes array
 }
 
 /**

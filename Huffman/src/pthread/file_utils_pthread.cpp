@@ -222,23 +222,172 @@ void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman, uint16_t *meta_data_s
 }
 
 
+typedef struct compress_args{
+    int t_id;                 /// The id of the thread
+    char const *file;         /// The file to be compressed
+    char const *output_file;  /// The compressed file
+    ASCIIHuffman *huffman;    /// The huffman struct containing the symbols
+
+    uint64_t start_byte;      /// The thread reads from this byte (inclusive)
+    uint64_t end_byte;        /// The thread reads up to this byte (exclusive)
+
+    uint64_t compressed_start_byte;    /// The thread starts writing from this byte (inclusive)
+    uint64_t compressed_end_byte;      /// The thread stops writing up to this byte (exclusive)
+
+    uint32_t *number_of_blocks;        /// The number of blocks that the thread writes to the file
+    uint32_t *number_of_padding;       /// The number of padding bits that the thread writes to the end of the section
+
+    uint16_t buffer_size;              /// The size of the buffer in bytes
+} CompressArgs;
+
+
+/**
+ * The thread function that compresses the file. Every thread has to compress a part of the file
+ * @param args  The arguments of the thread (CompressArgs)
+ * @return nullptr
+ */
+void *compressFileRunnable(void *args) {
+    // Cast the arguments to the correct type
+    auto arguments = (CompressArgs *) args;
+
+    // Extract some of the arguments for cleaner looking code
+    ASCIIHuffman *huffman = arguments->huffman;
+    uint32_t *n_blocks = arguments->number_of_blocks;
+    uint32_t *n_padding_bits = arguments->number_of_padding;
+    uint16_t  buffer_size = arguments->buffer_size;
+
+
+    // Open the file to be compressed
+    FILE *file = fopen(arguments->file, "rb");
+
+    if (file == nullptr) {
+        printf("File not found...\n");
+        exit(-1);
+    }
+
+    // Open the compressed file
+    FILE *compressed = fopen(arguments->output_file, "rb+");
+
+    if (compressed == nullptr) {
+        printf("File not found...\n");
+        exit(-1);
+    }
+
+    // Seek the start of the file to the starting byte
+    fseek(file, (long int)arguments->start_byte, SEEK_SET);
+
+    // Seek the start of the compressed file to the starting byte
+    fseek(compressed, (long int)arguments->compressed_start_byte, SEEK_SET);
+
+    // Start compressing the file
+
+    // The buffer holds the data to be written to the file. Once the buffer is full the data are written to the file
+    // and the buffer is overwritten with the next part of data. The process repeats until the end
+    auto *buffer = (uint128_t *)calloc(buffer_size, sizeof(uint128_t));
+
+    // Start reading from the file and converting chars to symbols
+    uint8_t c;  // The character read from the file
+
+    uint256_t symbol = 0;  // The symbol along with the symbol length of every char
+    uint8_t symbol_length = 0;  // The symbol length
+    uint8_t write_index = SYM_BUFF_SIZE - 1;  // The index of the start point of the symbol in the buffer
+
+    // The index to the buffer
+    int buff_index = 0;
+
+    // Read from the file byte by byte
+    for (long unsigned int i = 0; i < arguments->end_byte; ++i) {
+        fread(&c, sizeof(c), 1, file);  // Read byte from the file
+
+        symbol = huffman->symbols[c].symbol;  // The symbol of the read char
+        symbol_length = huffman->symbols[c].symbol_length;  // The number of bits of the symbol
+
+        if (write_index + 1 - symbol_length < 0) {  // If the buffer can't fit the symbol
+            // The buffer can fit write_index + 1 bits of the symbol
+
+            uint256_t mask = (1 << (symbol_length - write_index - 1)) - 1;
+
+            // Split the symbol
+            uint256_t remaining_symbol = symbol & mask;  // keep the remaining symbol
+            uint8_t remaining_length = symbol_length - write_index - 1;
+
+            symbol = symbol & ~mask;  // The part of the symbol that fits
+            symbol = symbol >> remaining_length;  // realign the symbol
+            symbol_length = write_index + 1;  // The length of the symbol that fits
+
+            // append the symbol to the buffer and if the buffer is full write to the file
+            insertToBuffer(buffer, &buff_index, &write_index, n_blocks, compressed, symbol_length, symbol, buffer_size);
+
+            // append the remaining symbol to the buffer and if the buffer is full write to the file
+            insertToBuffer(buffer, &buff_index, &write_index, n_blocks, compressed, remaining_length, remaining_symbol,
+                           buffer_size);
+
+        } else {  // else if the symbol fits in the buffer
+
+            // append to the buffer and if the buffer is full write to the file
+            insertToBuffer(buffer, &buff_index, &write_index, n_blocks, compressed, symbol_length, symbol, buffer_size);
+        }
+    }
+
+    // The final buffer may not be full. In that case the rest of the block bits will be 0 and will be counted as padding
+
+    // if the buffer index is not 0 or the write index is not 7 the last buffer was not full
+    if (buff_index != 0 || write_index != SYM_BUFF_SIZE - 1) {
+
+        // Update the number of padding bits. Every buffer element is SYM_BUFF_SIZE bits
+        *n_padding_bits += SYM_BUFF_SIZE * (buffer_size - buff_index - 1);
+
+        // zero the remaining bits in the buffer[buff_index]
+        if (write_index != SYM_BUFF_SIZE - 1) {
+
+            // Align the last SYM_BUFF_SIZE bits
+            buffer[buff_index] = buffer[buff_index] << (write_index + 1);
+
+            *n_padding_bits += write_index + 1;  // add the final padding bits
+        }
+
+        // write the buffer to the file
+        fwrite(buffer, sizeof(buffer[0]), buffer_size, compressed);
+
+        *n_blocks += 1;  // Update the number of blocks
+    }
+
+    // close the files and free the memory
+    fclose(file);
+    fclose(compressed);
+    free(buffer);
+
+    pthread_exit(nullptr);
+}
+
+
 /**
  * Takes the file to be compressed reads the bits and creates a new compressed file. The compressed file has the
  * following format:
- *
- *      Byte 0:3       The number of the padding bits added to the end of the file (uint32_t)
- *      Byte 4:7       The number of blocks in the file (uint32_t)
- *      Byte 8:9       The block size used to group data (uint16_t)
- *      Byte 10:8457   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
+ *      Byte 0         The number of sections in the file (uint8_t)  (In this example 3)
+ *      Byte 1:4       The number of the padding bits added to the end of the first section (uint32_t)
+ *      Byte 5:8       The number of the padding bits added to the end of the second section (uint32_t)
+ *      Byte 9:12      The number of the padding bits added to the end of the third section (uint32_t)
+ *      .
+ *      .
+ *      .
+ *      Byte 13:16     The number of blocks in the first section (uint32_t)
+ *      Byte 17:20     The number of blocks in the second section (uint32_t)
+ *      Byte 21:24     The number of blocks in the third section (uint32_t)
+ *      .
+ *      .
+ *      .
+ *      Byte 25:26     The block size used to group data (uint16_t)
+ *      Byte 27:8483   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
  *                     by the symbol are written as well as an 8 bit number. The size of the table is 256 x (256 + 8) bits
- *      Byte 8457:end  The compressed data
+ *      Byte 8484:end  The compressed data
  *
  * @param file       The original file
  * @param filename   The filename of the compressed file
  * @param huffman    The huffman struct that contains the information for the compression
- * @param blockSize  The size in bytes of the data that every write operation writes to the file. (must be power of 2)
+ * @param block_size The size in bytes of the data that every write operation writes to the file. (must be power of 2)
  */
-void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t blockSize) {
+void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_size) {
 
     // Create the new file name
     int len = (int) strlen(filename); // Get the length of the old filename
@@ -258,116 +407,128 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
         exit(1);
     }
 
+    uint16_t meta_data_size = 0;  // The size of the meta data in bytes
 
-    // This is the number of padding bits to the end of the file. The padding bits align the data to bytes.
-    uint32_t nPaddingBits = 0;
+    // STEP 1 - Write the number of sections
+    uint8_t n_sections = N_THREADS;  // The number of sections the file is divided to
+    fwrite(&n_sections, sizeof(n_sections), 1, compressed);  // Write the number of sections to the file
+    meta_data_size += sizeof(n_sections);  // Update the meta data size
 
-    // Write the number of padding bits to the compressed file. This number is 0, and it will be updated in the end
-    fwrite(&nPaddingBits, sizeof(nPaddingBits), 1, compressed);
+    // STEP 2 - Write the number of padding bits of each section (updated in the end)
+    uint32_t section_padding[N_THREADS] = {0};  // The number of padding bits of each section (initially 0)
+    fwrite(&section_padding, sizeof(section_padding[0]), N_THREADS, compressed);  // Write the padding bits to the file
+    meta_data_size += sizeof(section_padding[0]) * N_THREADS;  // Update the meta data size
 
+    // STEP 3 - Write the number of blocks of each section (updated in the end)
+    uint32_t n_blocks[N_THREADS] = {0};  // The number of blocks written to the file
+    fwrite(&n_blocks, sizeof(n_blocks[0]), N_THREADS, compressed);  // Write the number of blocks.
+    meta_data_size += sizeof(n_blocks) * N_THREADS;  // Update the meta data size
 
-    // The number of blocks written to the file
-    uint32_t nBlocks = 0;
+    // STEP 4 - Write the block size used to group data to the compressed file.
+    fwrite(&block_size, sizeof(block_size), 1, compressed);
+    meta_data_size += sizeof(block_size);  // Update the meta data size
 
-    // Write the number of blocks. The actual number will be written in the end of the process
-    fwrite(&nBlocks, sizeof(nBlocks), 1, compressed);
+    // STEP 5 - Write the huffman table to the beginning of the file
+    writeHuffmanToFile(compressed, huffman, &meta_data_size);
 
-    // Write the block size used to group data to the compressed file.
-    fwrite(&blockSize, sizeof(blockSize), 1, compressed);
+    uint16_t buffer_size = block_size / SYM_BUFF_SIZE;
 
-    // Write the huffman table to the beginning of the file
-    writeHuffmanToFile(compressed, huffman);
+    CompressArgs args[N_THREADS];  // The arguments for the threads
 
-    uint16_t bufferSize = blockSize / SYM_BUFF_SIZE;
+    // Create the arguments of every thread
+    for (int i = 0; i < N_THREADS; i++) {
+        args[i].t_id = i;  // Set the thread id
 
-    // The buffer holds the data to be written to the file. Once the buffer is full the data are written to the file
-    // and the buffer is overwritten with the next part of data. The process repeats until the end
-    auto *buffer = (uint128_t *) calloc(bufferSize, sizeof(uint128_t));
+        args[i].file = filename;  // The name of the file to be compressed
+        args[i].output_file = newFilename;  // The name of the compressed file
 
-    // Start reading from the file and converting chars to symbols
-    uint8_t c;  // The character read from the file
+        args[i].huffman = huffman;  // The huffman struct containing the symbols
 
-    fseek(file, 0, SEEK_END);  // Jump to the end of the file
-    long unsigned int file_len = ftell(file);  // Get the current byte offset in the file
+        for (int j = 0; j < 255; ++j) {
+            // Find the number of bytes each thread has to compress
+            args[i].end_byte += huffman->frequencies[i][j];
 
-    rewind(file);  // Jump back to the beginning of the file
-
-    uint256_t symbol = 0;  // The symbol along with the symbol length of every char
-    uint8_t symbol_length = 0;  // The symbol length
-    uint8_t write_index = SYM_BUFF_SIZE - 1;  // The index of the start point of the symbol in the buffer
-
-    // The index to the buffer
-    int buff_index = 0;
-
-    // Read from the file byte by byte
-    for (long unsigned int i = 0; i < file_len; ++i) {
-        fread(&c, sizeof(c), 1, file);  // Read from the file
-
-        symbol = huffman->symbols[c].symbol;  // The symbol of the read char
-        symbol_length = huffman->symbols[c].symbol_length;  // The number of bits of the symbol
-
-        if (write_index + 1 - symbol_length < 0) {  // If the buffer can't fit the symbol
-            // The buffer can fit write_index + 1 bits of the symbol
-
-            uint256_t mask = (1 << (symbol_length - write_index - 1)) - 1;
-
-            // Split the symbol
-            uint256_t remaining_symbol = symbol & mask;  // keep the remaining symbol
-            uint8_t remaining_length = symbol_length - write_index - 1;
-
-            symbol = symbol & ~mask;  // The part of the symbol that fits
-            symbol = symbol >> remaining_length;  // realign the symbol
-            symbol_length = write_index + 1;  // The length of the symbol that fits
-
-            // append the symbol to the buffer and if the buffer is full write to the file
-            insertToBuffer(buffer, &buff_index, &write_index, &nBlocks, compressed, symbol_length, symbol, bufferSize);
-
-            // append the remaining symbol to the buffer and if the buffer is full write to the file
-            insertToBuffer(buffer, &buff_index, &write_index, &nBlocks, compressed, remaining_length, remaining_symbol,
-                           bufferSize);
-
-        } else {  // else if the symbol fits in the buffer
-
-            // append to the buffer and if the buffer is full write to the file
-            insertToBuffer(buffer, &buff_index, &write_index, &nBlocks, compressed, symbol_length, symbol, bufferSize);
+            // find the number of compressed bits that the thread has to write
+            args[i].compressed_end_byte += huffman->frequencies[i][j] * huffman->symbols[j].symbol_length;
         }
+
+        // if the number of bits don't align to the block size
+        if (args->compressed_end_byte % (block_size * 8) != 0) {
+            // This is the number of blocks required
+            args->compressed_end_byte = (args->compressed_end_byte / (block_size * 8)) + 1;
+
+            // Convert the number of blocks to bytes
+            args->compressed_end_byte *= block_size;
+        }
+        else {
+            // This is the number of blocks required
+            args->compressed_end_byte /= (block_size * 8);
+
+            // Convert the number of blocks to bytes
+            args->compressed_end_byte *= block_size;
+        }
+
+        // Calculate the start and end bytes
+        if (i == 0) {
+            args[i].start_byte = 0;  // The first thread starts from the beginning of the file
+
+            // The first thread starts writing from the end of the meta data
+            args[i].compressed_start_byte = meta_data_size;
+
+            // The first thread stops writing at the end of the meta data + the number of bytes it has to write
+            args[i].compressed_end_byte += meta_data_size;
+
+        } else {
+            args[i].start_byte = args[i - 1].end_byte;  // The start byte is the end byte of the previous thread
+            args[i].end_byte += args[i].start_byte;  // The end byte is the calculated end byte + the start byte
+
+            // The start byte of the thread is the end byte of the previous thread
+            args[i].compressed_start_byte = args[i - 1].compressed_end_byte;
+
+            // The end byte of the thread is the calculated end byte + the start byte
+            args[i].compressed_end_byte += args[i].compressed_start_byte;
+        }
+
+        args[i].number_of_blocks = &n_blocks[i];  // The number of blocks that the thread writes to the file
+        args[i].number_of_padding = &section_padding[i];  // The number of padding bits that the thread writes to the end of it's section
+        args[i].buffer_size = buffer_size;  // The size of the buffer
     }
 
-    // The final buffer may not be full. In that case the rest of the block bits will be 0 and will be counted as padding
+    // Create the threads attributes
+    pthread_attr_t attributes[N_THREADS];
+    for (auto & attribute : attributes) {
+        pthread_attr_init(&attribute);
+    }
 
-    // if the buffer index is not 0 or the write index is not 7 the last buffer was not full
-    if (buff_index != 0 || write_index != SYM_BUFF_SIZE - 1) {
+    pthread_t threads[N_THREADS];
 
-        // Update the number of padding bits. Every buffer element is SYM_BUFF_SIZE bits
-        nPaddingBits += SYM_BUFF_SIZE * (bufferSize - buff_index - 1);
+    // Create the threads
+    for (int i = 0; i < N_THREADS; i++) {
+        args[i].t_id = i;
+        pthread_create(&threads[i], &attributes[i], compressFileRunnable, &args[i]);
+    }
 
-        // zero the remaining bits in the buffer[buff_index]
-        if (write_index != SYM_BUFF_SIZE - 1) {
-
-            // Align the last SYM_BUFF_SIZE bits
-            buffer[buff_index] = buffer[buff_index] << (write_index + 1);
-
-            nPaddingBits += write_index + 1;  // add the final padding bits
-        }
-
-        // write the buffer to the file
-        fwrite(buffer, sizeof(buffer[0]), bufferSize, compressed);
-
-        nBlocks++;
+    // Join the threads
+    for (unsigned long thread : threads) {
+        pthread_join(thread, nullptr);
     }
 
     // update the number of padding bits and the number of blocks written tho the compressed file
-    rewind(compressed);
+    fseek(compressed, 1, SEEK_SET);  // Seek to the beginning of the padding bits
 
-    // Write the number of padding bits to the compressed file.
-    fwrite(&nPaddingBits, sizeof(nPaddingBits), 1, compressed);
+    // Write the number of padding bits of every section to the meta data.
+    fwrite(&section_padding, sizeof(section_padding[0]), N_THREADS, compressed);
 
-    // Write the number of blocks.
-    fwrite(&nBlocks, sizeof(nBlocks), 1, compressed);
+    // Write the number of blocks of every section to the meta data.
+    fwrite(&n_blocks, sizeof(n_blocks[0]), N_THREADS, compressed);
 
+    // Close the file free memory and destroy the attributes
     free(newFilename);
-    free(buffer);
     fclose(compressed);
+
+    for (auto & attribute : attributes) {
+        pthread_attr_destroy(&attribute);
+    }
 }
 
 
@@ -458,7 +619,7 @@ inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *n
  *
  * @param filename  The name of the file to be decompressed
  */
-void decompressFile(char *filename){
+void decompressFile(const char *filename){
     // Open the decompressed file in read mode
     FILE *file = fopen(filename, "rb");
 
