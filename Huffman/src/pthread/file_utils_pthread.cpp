@@ -19,7 +19,7 @@ using namespace std;
  * @param filename The file name
  * @return  The FILE pointer created
  */
-FILE *openBinaryFile(char *filename) {
+FILE *openBinaryFile(const char *filename) {
     FILE *file = fopen(filename, "rb");
 
     if (file == nullptr) {
@@ -28,6 +28,130 @@ FILE *openBinaryFile(char *filename) {
     }
 
     return file;
+}
+
+
+typedef struct freq_args {
+    int t_id;
+    uint64_t *freq_arr;
+    const char *filename;
+
+    uint64_t start_byte;  // inclusive
+    uint64_t end_byte;  // exclusive
+
+} FreqArgs;
+
+
+/**
+ * Runnable function that calculates the characters frequency of a part of a file
+ *
+ * @param args FreqArgs struct containing the arguments of the function
+ * @return
+ */
+void *frequencyRunnable(void *args) {
+    // Type cast the arguments
+    auto *arguments = (FreqArgs *) args;
+
+    // Each thread creates it's own file handler
+    FILE *file = openBinaryFile(arguments->filename);
+
+    // Count the frequencies of the part of the file assigned
+    charFrequency(file, arguments->freq_arr, arguments->start_byte, arguments->end_byte);
+
+    fclose(file);  // close the file
+
+    pthread_exit(nullptr);
+}
+
+
+/**
+ * Divides the frequency calculation work between threads and then creates the threads to actually calculate the
+ * frequencies
+ *
+ * @param filename The input file name (to be compressed)
+ * @param huffman  The huffman struct
+ */
+void calculateFrequency(const char *filename, ASCIIHuffman *huffman) {
+    FILE *file = openBinaryFile(filename);
+
+    // Get the file length
+    fseek(file, 0, SEEK_END);  // Jump to the end of the file
+    uint64_t file_len = ftell(file);  // Get the current byte offset in the file
+
+    rewind(file);  // Jump back to the beginning of the file
+
+    // Initialize the thread attributes
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_init(&pthread_custom_attr);
+
+    // The frequencies array is initialised.
+    for (auto & frequency : huffman->frequencies) {
+        for (int j = 0; j < 256; ++j) {
+            frequency[j] = 0;
+        }
+    }
+
+    FreqArgs thread_args[N_THREADS]; // The struct array containing the arguments for every thread
+    pthread_t threads[N_THREADS];  // Array of all the threads
+
+    uint64_t b_per_thr;  // The number of bytes every thread will process
+    uint64_t last_b_per_thr;  // The number of bytes the first thread will process
+
+    // Determine the bytes each thread will process
+    if (file_len % N_THREADS == 0) {
+        b_per_thr = last_b_per_thr = file_len / N_THREADS;
+
+    } else {
+        b_per_thr = file_len / N_THREADS;
+        last_b_per_thr = b_per_thr + file_len % N_THREADS;
+    }
+
+    for (int i = 0; i < N_THREADS; ++i) {
+        // Create the thread's arguments
+        thread_args[i].t_id = i;
+        thread_args[i].freq_arr = huffman->frequencies[i];
+        thread_args[i].filename = filename;
+
+        if (i == N_THREADS - 1) {
+            thread_args[i].start_byte = i * b_per_thr;
+            thread_args[i].end_byte = i * b_per_thr + last_b_per_thr + 1;
+
+        } else {
+            thread_args[i].start_byte = i * b_per_thr;
+            thread_args[i].end_byte = i * b_per_thr + b_per_thr;
+        }
+
+        // Create the thread
+        pthread_create(threads + i, &pthread_custom_attr, frequencyRunnable, (void *) &thread_args[i]);
+
+#ifdef DEBUG_MODE
+        cout << "Thread: " << i << " calculating frequencies..." << endl;
+#else
+        if(thread_args[i].t_id == 0) {
+            cout << N_THREADS << " threads calculating frequencies..." << endl;
+        }
+#endif
+
+    }
+
+    // Join all the threads
+    for (unsigned long thread: threads) {
+        pthread_join(thread, nullptr);
+    }
+
+#ifdef DEBUG_MODE
+    cout << "Accumulating..." << endl;
+#endif
+
+    // Accumulate all the frequencies
+    for (auto &frequency: huffman->frequencies) {
+        for (int j = 0; j < 256; ++j) {
+            huffman->charFreq[j] += frequency[j];
+        }
+    }
+
+    // Delete the attributes
+    pthread_attr_destroy(&pthread_custom_attr);
 }
 
 

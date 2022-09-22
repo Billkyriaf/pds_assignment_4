@@ -11,7 +11,17 @@
  * @param filename The file name
  * @return  The FILE pointer created
  */
-FILE *openBinaryFile(char *filename);
+FILE *openBinaryFile(const char *filename);
+
+
+/**
+ * Divides the frequency calculation work between threads and then creates the threads to actually calculate the
+ * frequencies
+ *
+ * @param filename The input file name (to be compressed)
+ * @param huffman  The huffman struct
+ */
+void calculateFrequency(const char *filename, ASCIIHuffman *huffman);
 
 
 /**
@@ -20,9 +30,9 @@ FILE *openBinaryFile(char *filename);
  * @param file       The original file
  * @param filename   The filename of the compressed file
  * @param huffman    The huffman struct that contains the information for the compression
- * @param blockSize  The size of the data that every write operation writes to the file
+ * @param block_size  The size of the data that every write operation writes to the file
  */
-void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t blockSize);
+void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_size);
 
 
 /**
@@ -30,6 +40,6 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
  *
  * @param filename  The name of the file to be decompressed
  */
-void decompressFile(char *filename);
+void decompressFile(const char *filename);
 
 #endif //FILE_UTILS_PTH_H
