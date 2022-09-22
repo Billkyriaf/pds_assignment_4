@@ -207,15 +207,17 @@ void insertToBuffer(uint128_t *buffer, int *buff_index, uint8_t *write_index, ui
  * @param file     The compressed file pointer
  * @param huffman  The huffman struct containing all the symbols
  */
-void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman) {
+void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman, uint16_t *meta_data_size) {
 
     // Write the symbols with their lengths in the file
     for (Symbol &symbol : huffman->symbols) {
         // Write the huffman table to the beginning of the file
         fwrite(&symbol.symbol, sizeof(huffman->symbols[0].symbol), 1, file);
+        *meta_data_size += sizeof(huffman->symbols[0].symbol);
 
         // Write the length of the symbol to the file
         fwrite(&symbol.symbol_length, sizeof(symbol.symbol_length), 1, file);
+        *meta_data_size += sizeof(symbol.symbol_length);
     }
 }
 

@@ -5,6 +5,8 @@
 
 #include "uint256/uint256_t.h"
 
+#define N_THREADS 16
+
 /**
  * This is a single symbol for an ascii character. Every character is 4bits long. That means there are 16 different
  * characters. This leads to huffman symbols with with max length of 15 bits.
@@ -44,6 +46,11 @@ typedef struct half_ascii_huffman {
      */
     uint64_t charFreq[256];
 
+    /**
+     * The frequency of every symbol measured by the threads
+     */
+    uint64_t frequencies[N_THREADS][256];
+
 } ASCIIHuffman;
 
 
@@ -63,4 +70,5 @@ typedef struct huffman_node{
     uint16_t right;  /// The index of the right child of the node (-1 if there are no children)
 
 } HuffmanNode;
+
 #endif //HUFFMAN_STRUCTS_H
