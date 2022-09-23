@@ -1,5 +1,6 @@
 CC = g++
 BUILD_DIR := ./make_build
+PROF_DIR := ./profiling
 SRC_DIRS := ./src
 INC_DIRS := ./include
 
@@ -25,7 +26,7 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d) $(shell find $(INC_DIRS) -type d)
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CFLAGS := $(INC_FLAGS) -O3 -Wall -pg
+CFLAGS := $(INC_FLAGS) -O3 -Wall -g # -pg
 
 all: pre_build build_serial build_pthread post_build
 
