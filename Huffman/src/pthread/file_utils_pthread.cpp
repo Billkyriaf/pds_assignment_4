@@ -172,8 +172,10 @@ void *compressFileRunnable(void *args) {
     // The index to the buffer
     int buff_index = 0;
 
+    uint64_t byte_count = arguments->end_byte - arguments->start_byte;  // The size of the file to be compressed
+
     // Read from the file byte by byte
-    for (long unsigned int i = 0; i < arguments->end_byte; ++i) {
+    for (uint64_t i = 0; i < byte_count; ++i) {
         fread(&c, sizeof(c), 1, file);  // Read byte from the file
 
         symbol = huffman->symbols[c].symbol;  // The symbol of the read char
@@ -335,19 +337,19 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
         }
 
         // if the number of bits don't align to the block size
-        if (args->compressed_end_byte % (block_size * 8) != 0) {
+        if (args[i].compressed_end_byte % (block_size * 8) != 0) {
             // This is the number of blocks required
-            args->compressed_end_byte = (args->compressed_end_byte / (block_size * 8)) + 1;
+            args[i].compressed_end_byte = (args[i].compressed_end_byte / (block_size * 8)) + 1;
 
             // Convert the number of blocks to bytes
-            args->compressed_end_byte *= block_size;
+            args[i].compressed_end_byte *= block_size;
         }
         else {
             // This is the number of blocks required
-            args->compressed_end_byte /= (block_size * 8);
+            args[i].compressed_end_byte /= (block_size * 8);
 
             // Convert the number of blocks to bytes
-            args->compressed_end_byte *= block_size;
+            args[i].compressed_end_byte *= block_size;
         }
 
         // Calculate the start and end bytes
