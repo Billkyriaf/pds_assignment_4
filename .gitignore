@@ -24,3 +24,5 @@ test_code/
 Huffman/profiling/
 
 Huffman/archived_code/huffman_tree_pthread_v2.cpp
+
+Huffman/gmon.out
