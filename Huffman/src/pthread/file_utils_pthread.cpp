@@ -654,4 +654,6 @@ void decompressFile(const char *filename){
 
     fclose(decompressed);
     fclose(file);
+
+    free(buffer);
 }
