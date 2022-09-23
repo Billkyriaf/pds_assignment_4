@@ -9,9 +9,10 @@
  * Opens a file in binary format for reading
  *
  * @param filename The file name
+ * @param mode     The mode to open the file
  * @return  The FILE pointer created
  */
-FILE *openBinaryFile(const char *filename);
+FILE *openBinaryFile(const char *filename, const char *mode);
 
 
 /**

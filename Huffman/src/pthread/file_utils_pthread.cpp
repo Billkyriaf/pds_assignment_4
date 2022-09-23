@@ -17,10 +17,11 @@ using namespace std;
  * Opens a file in binary format for reading
  *
  * @param filename The file name
+ * @param mode     The mode to open the file
  * @return  The FILE pointer created
  */
-FILE *openBinaryFile(const char *filename) {
-    FILE *file = fopen(filename, "rb");
+FILE *openBinaryFile(const char *filename, const char *mode) {
+    FILE *file = fopen(filename, mode);
 
     if (file == nullptr) {
         printf("File not found...\n");
@@ -258,7 +259,7 @@ void *compressFileRunnable(void *args) {
 
 
     // Open the file to be compressed
-    FILE *file = fopen(arguments->file, "rb");
+    FILE *file = openBinaryFile(arguments->file, "rb");
 
     if (file == nullptr) {
         printf("File not found...\n");
@@ -266,7 +267,7 @@ void *compressFileRunnable(void *args) {
     }
 
     // Open the compressed file
-    FILE *compressed = fopen(arguments->output_file, "rb+");
+    FILE *compressed = openBinaryFile(arguments->output_file, "rb+");
 
     if (compressed == nullptr) {
         printf("File not found...\n");
@@ -400,7 +401,7 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     memcpy(newFilename + len, end, sizeof(char) * 6);  // Append the ending to the file name
 
     // Create the new file
-    FILE *compressed = fopen(newFilename, "wb");
+    FILE *compressed = openBinaryFile(newFilename, "wb");
 
     if (compressed == nullptr) {
         cout << "\n\nCould not create file" << endl;
@@ -626,7 +627,7 @@ inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *n
  */
 void decompressFile(const char *filename){
     // Open the decompressed file in read mode
-    FILE *file = fopen(filename, "rb");
+    FILE *file = openBinaryFile(filename, "rb");
 
     // Create a new file for decompression
     int len = (int) strlen(filename); // Get the length of the old filename
@@ -640,7 +641,7 @@ void decompressFile(const char *filename){
     memcpy(newFilename + len - 5, end, sizeof(char) * 5);  // Append the ending to the file name
 
     // Create the new file
-    FILE *decompressed = fopen(newFilename, "wb");
+    FILE *decompressed = openBinaryFile(newFilename, "wb");
 
     if (decompressed == nullptr) {
         cout << "\n\nCould not create file" << endl;
