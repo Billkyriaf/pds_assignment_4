@@ -142,18 +142,8 @@ void *compressFileRunnable(void *args) {
     // Open the file to be compressed
     FILE *file = openBinaryFile(arguments->file, "rb");
 
-    if (file == nullptr) {
-        printf("File not found...\n");
-        exit(-1);
-    }
-
     // Open the compressed file
     FILE *compressed = openBinaryFile(arguments->output_file, "rb+");
-
-    if (compressed == nullptr) {
-        printf("File not found...\n");
-        exit(-1);
-    }
 
     // Seek the start of the file to the starting byte
     fseek(file, (long int)arguments->start_byte, SEEK_SET);
@@ -290,12 +280,7 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     // Create the new file
     FILE *compressed = openBinaryFile(newFilename, "wb");
 
-    if (compressed == nullptr) {
-        cout << "\n\nCould not create file" << endl;
-        exit(1);
-    }
-
-    uint16_t meta_data_size = 0;  // The size of the meta data in bytes
+    uint16_t meta_data_size = 0;  // The size of the metadata in bytes
 
     // STEP 1 - Write the number of sections
     uint8_t n_sections = N_THREADS;  // The number of sections the file is divided to
@@ -472,7 +457,7 @@ inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *n
             if (bit == 0) { // If the bit is 0 take the left path of the tree
                 *node = nodes[node->left];
 
-            } else { // Else the bit is 1 and we take the right path of the tree
+            } else { // Else the bit is 1, and we take the right path of the tree
                 *node = nodes[node->right];
             }
 
@@ -542,11 +527,6 @@ void decompressFile(const char *filename){
 
     // Create the new file
     FILE *decompressed = openBinaryFile(newFilename, "wb");
-
-    if (decompressed == nullptr) {
-        cout << "\n\nCould not create file" << endl;
-        exit(1);
-    }
 
     free(newFilename);  // free the no longer needed memory
 
