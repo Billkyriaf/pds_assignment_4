@@ -133,6 +133,9 @@ void *compressFileRunnable(void *args) {
     uint32_t *n_padding_bits = arguments->number_of_padding;
     uint16_t  buffer_size = arguments->buffer_size;
 
+#ifdef DEBUG_MODE
+    cout << "Thread: " << arguments->t_id << " compressing from byte: " << arguments->start_byte << " to byte: " << arguments->end_byte << endl;
+#endif
 
     // Open the file to be compressed
     FILE *file = openBinaryFile(arguments->file, "rb");
@@ -230,6 +233,10 @@ void *compressFileRunnable(void *args) {
 
         *n_blocks += 1;  // Update the number of blocks
     }
+
+#ifdef DEBUG_MODE
+    cout << "Thread: " << arguments->t_id << " wrote " << *n_blocks << " blocks and " << *n_padding_bits << " padding bits" << endl;
+#endif
 
     // close the files and free the memory
     fclose(file);
@@ -377,6 +384,19 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
         args[i].number_of_padding = &section_padding[i];  // The number of padding bits that the thread writes to the end of it's section
         args[i].buffer_size = buffer_size;  // The size of the buffer
     }
+
+#ifdef DEBUG_MODE
+    for (int i = 0; i< N_THREADS; i++) {
+        cout << "\n\n" << endl;
+        cout << "Thread " << args[i].t_id << " will compress bytes " << args[i].start_byte << " to " << args[i].end_byte << endl;
+        cout << "Thread " << args[i].t_id << " will write bytes " << args[i].compressed_start_byte << " to " << args[i].compressed_end_byte << endl;
+        cout << "Thread " << args[i].t_id << " will write " << *args[i].number_of_blocks << " blocks" << endl;
+        cout << "Thread " << args[i].t_id << " will write " << *args[i].number_of_padding << " padding bits" << endl;
+        cout << "Thread " << args[i].t_id << " will use a buffer size of " << args[i].buffer_size << endl;
+        cout << "\n\n" << endl;
+    }
+#endif
+
 
     // Create the threads attributes
     pthread_attr_t attributes[N_THREADS];
