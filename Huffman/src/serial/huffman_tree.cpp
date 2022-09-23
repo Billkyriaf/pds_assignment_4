@@ -2,6 +2,7 @@
 #include <cmath>
 
 #include "huffman_tree.h"
+#include "file_utils.h"
 
 #define SCAN_SIZE 1 * 1024 * 1024 * 1024  // 1GB
 //#define DEBUG_MODE
@@ -20,7 +21,8 @@
  * @param file     The file to count the frequencies
  * @param huffman  The huffman struct
  */
-void charFrequency(FILE *file, ASCIIHuffman *huffman) {
+void charFrequency(const char *filename, ASCIIHuffman *huffman) {
+    FILE *file = openBinaryFile(filename, "rb");
 
     uint8_t c;  // The character read from the file
 

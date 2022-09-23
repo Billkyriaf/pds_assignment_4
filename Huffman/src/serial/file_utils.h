@@ -10,9 +10,10 @@
  * Opens a file in binary format for reading
  *
  * @param filename The file name
+ * @param mode     The mode to open the file
  * @return  The FILE pointer created
  */
-FILE *openBinaryFile(char *filename);
+FILE *openBinaryFile(const char *filename, const char* mode);
 
 
 /**
@@ -23,7 +24,7 @@ FILE *openBinaryFile(char *filename);
  * @param huffman    The huffman struct that contains the information for the compression
  * @param block_size  The size of the data that every write operation writes to the file
  */
-void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t block_size);
+void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_size);
 
 
 /**
@@ -31,6 +32,6 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
  *
  * @param filename  The name of the file to be decompressed
  */
-void decompressFile(char *filename);
+void decompressFile(const char *filename);
 
 #endif //FILE_UTILS_H

@@ -17,6 +17,11 @@ int main() {
     Timer timer;
     Timer overall_timer;
 
+    //    char *input_file_name = argv[1];
+    // Create the file names (temp solution)
+    const char *input_file_name = "../../data/test_3";
+    const char *output_file_name = "../../data/test_3.huff";
+
     // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {
         huffman.charFreq[i] = 0;
@@ -26,13 +31,11 @@ int main() {
 
     startTimer(&overall_timer);
 
-    FILE *file = openBinaryFile("../data/test_3");
-
     cout << "Calculating frequencies..." << endl;
 
     startTimer(&timer);
 
-    charFrequency(file, &huffman);
+    charFrequency(input_file_name, &huffman);
 
     stopTimer(&timer);
 
@@ -74,7 +77,7 @@ int main() {
 
     startTimer(&timer);
 
-    compressFile(file, "../data/test_3", &huffman, 8192 * 4);
+    compressFile(input_file_name, &huffman, 8192 * 4);
 
     stopTimer(&timer);
 
@@ -85,7 +88,7 @@ int main() {
 
     startTimer(&timer);
 
-    decompressFile("../data/test_3.huff");
+    decompressFile(output_file_name);
 
     stopTimer(&timer);
 
@@ -96,6 +99,5 @@ int main() {
     cout << "Overall elapsed time: ";
     displayElapsed(&overall_timer);
 
-    fclose(file);
     return 0;
 }

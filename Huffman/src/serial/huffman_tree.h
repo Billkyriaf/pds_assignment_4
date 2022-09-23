@@ -8,10 +8,10 @@
 /**
  * Counts the character frequency of every ascii char of the file being compressed
  *
- * @param file  The file to count the frequencies
- * @param huffman  The huffman struct
+ * @param filename  The file name to count the frequencies from
+ * @param huffman   The huffman struct
  */
-void charFrequency(FILE *file, ASCIIHuffman *huffman);
+void charFrequency(const char *filename, ASCIIHuffman *huffman);
 
 
 /**

@@ -17,10 +17,11 @@ using namespace std;
  * Opens a file in binary format for reading
  *
  * @param filename The file name
+ * @param mode     The mode to open the file
  * @return  The FILE pointer created
  */
-FILE *openBinaryFile(char *filename) {
-    FILE *file = fopen(filename, "rb");
+FILE *openBinaryFile(const char *filename, const char *mode) {
+    FILE *file = fopen(filename, mode);
 
     if (file == nullptr) {
         printf("File not found...\n");
@@ -112,7 +113,7 @@ void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman) {
  * @param huffman    The huffman struct that contains the information for the compression
  * @param blockSize  The size in bytes of the data that every write operation writes to the file. (must be power of 2)
  */
-void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t blockSize) {
+void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t blockSize) {
 
     // Create the new file name
     int len = (int) strlen(filename); // Get the length of the old filename
@@ -125,13 +126,8 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
     memcpy(newFilename + len, end, sizeof(char) * 6);  // Append the ending to the file name
 
     // Create the new file
-    FILE *compressed = fopen(newFilename, "wb");
-
-    if (compressed == nullptr) {
-        cout << "\n\nCould not create file" << endl;
-        exit(1);
-    }
-
+    FILE *compressed = openBinaryFile(newFilename, "wb");
+    FILE *file = openBinaryFile(filename, "rb");
 
     // This is the number of padding bits to the end of the file. The padding bits align the data to bytes.
     uint32_t nPaddingBits = 0;
@@ -242,6 +238,7 @@ void compressFile(FILE *file, char *filename, ASCIIHuffman *huffman, uint16_t bl
     free(newFilename);
     free(buffer);
     fclose(compressed);
+    fclose(file);
 }
 
 
@@ -332,9 +329,9 @@ inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *n
  *
  * @param filename  The name of the file to be decompressed
  */
-void decompressFile(char *filename){
+void decompressFile(const char *filename){
     // Open the decompressed file in read mode
-    FILE *file = fopen(filename, "rb");
+    FILE *file = openBinaryFile(filename, "rb");
 
     // Create a new file for decompression
     int len = (int) strlen(filename); // Get the length of the old filename
@@ -348,7 +345,7 @@ void decompressFile(char *filename){
     memcpy(newFilename + len - 5, end, sizeof(char) * 5);  // Append the ending to the file name
 
     // Create the new file
-    FILE *decompressed = fopen(newFilename, "wb");
+    FILE *decompressed = openBinaryFile(newFilename, "wb");
 
     if (decompressed == nullptr) {
         cout << "\n\nCould not create file" << endl;
