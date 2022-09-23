@@ -1,8 +1,6 @@
 #ifndef FILE_UTILS_PTH_H
 #define FILE_UTILS_PTH_H
 
-#include <cstdio>
-
 #include "../../include/structs.h"
 
 /**
@@ -13,16 +11,6 @@
  * @return  The FILE pointer created
  */
 FILE *openBinaryFile(const char *filename, const char *mode);
-
-
-/**
- * Divides the frequency calculation work between threads and then creates the threads to actually calculate the
- * frequencies
- *
- * @param filename The input file name (to be compressed)
- * @param huffman  The huffman struct
- */
-void calculateFrequency(const char *filename, ASCIIHuffman *huffman);
 
 
 /**

@@ -1,8 +1,6 @@
-#include <cstdio>
 #include <iostream>
-#include <pthread.h>
-#include "../../include/timer/timer.h"
 
+#include "../../include/timer/timer.h"
 #include "file_utils_pthread.h"
 #include "huffman_tree_pthread.h"
 
@@ -21,7 +19,7 @@ int main(int argc, char **argv) {
 //    char *input_file_name = argv[1];
     // Create the file names (temp solution)
     const char *input_file_name = "../../data/test_3";
-    const char *output_file_name = "./data/test_3.huff";
+    const char *output_file_name = "../../data/test_3.huff";
 
     // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {
