@@ -21,7 +21,9 @@ using namespace std;
  * @return  The FILE pointer created
  */
 FILE *openBinaryFile(const char *filename, const char *mode) {
-    FILE *file = fopen(filename, mode);
+    FILE *file = nullptr;
+
+    file = fopen(filename, mode);
 
     if (file == nullptr) {
         printf("File not found...\n");
