@@ -92,11 +92,11 @@ void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman, uint16_t *meta_data_s
     for (Symbol &symbol : huffman->symbols) {
         // Write the huffman table to the beginning of the file
         fwrite(&symbol.symbol, sizeof(huffman->symbols[0].symbol), 1, file);
-        *meta_data_size += sizeof(huffman->symbols[0].symbol);
+        *meta_data_size = *meta_data_size + sizeof(huffman->symbols[0].symbol);
 
         // Write the length of the symbol to the file
         fwrite(&symbol.symbol_length, sizeof(symbol.symbol_length), 1, file);
-        *meta_data_size += sizeof(symbol.symbol_length);
+        *meta_data_size = *meta_data_size + sizeof(symbol.symbol_length);
     }
 }
 
@@ -295,7 +295,7 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     // STEP 3 - Write the number of blocks of each section (updated in the end)
     uint32_t n_blocks[N_THREADS] = {0};  // The number of blocks written to the file
     fwrite(&n_blocks, sizeof(n_blocks[0]), N_THREADS, compressed);  // Write the number of blocks.
-    meta_data_size += sizeof(n_blocks) * N_THREADS;  // Update the meta data size
+    meta_data_size += sizeof(n_blocks[0]) * N_THREADS;  // Update the meta data size
 
     // STEP 4 - Write the block size used to group data to the compressed file.
     fwrite(&block_size, sizeof(block_size), 1, compressed);
