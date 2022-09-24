@@ -4,8 +4,8 @@ project(Huffman)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-O3")
 
-#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-#set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 
 add_executable(Huffman include/uint256/uint128_t.cpp include/uint256/uint256_t.cpp src/serial/main.cpp
         src/serial/huffman_tree.cpp src/serial/file_utils.cpp include/structs.h include/timer/timer.cpp include/timer/timer.h)
