@@ -256,14 +256,14 @@ void *compressFileRunnable(void *args) {
  *      .
  *      .
  *      Byte 25:26     The block size used to group data (uint16_t)
- *      Byte 27:8483   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
+ *      Byte 27:8474   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
  *                     by the symbol are written as well as an 8 bit number. The size of the table is 256 x (256 + 8) bits
- *      Byte 8484:end  The compressed data
+ *      Byte 8475:end  The compressed data
  *
  * @param file       The original file
  * @param filename   The filename of the compressed file
  * @param huffman    The huffman struct that contains the information for the compression
- * @param block_size The size in bytes of the data that every write operation writes to the file. (must be power of 2)
+ * @param block_size The size in bits of the data that every write operation writes to the file. (must be power of 2)
  */
 void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_size) {
 
@@ -331,19 +331,19 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
         }
 
         // if the number of bits don't align to the block size
-        if (args[i].compressed_end_byte % (block_size * 8) != 0) {
+        if (args[i].compressed_end_byte % block_size != 0) {
             // This is the number of blocks required
-            args[i].compressed_end_byte = (args[i].compressed_end_byte / (block_size * 8)) + 1;
+            args[i].compressed_end_byte = (args[i].compressed_end_byte / block_size) + 1;
 
             // Convert the number of blocks to bytes
-            args[i].compressed_end_byte *= block_size;
+            args[i].compressed_end_byte *= (block_size / 8);
         }
         else {
             // This is the number of blocks required
-            args[i].compressed_end_byte /= (block_size * 8);
+            args[i].compressed_end_byte /= block_size;
 
             // Convert the number of blocks to bytes
-            args[i].compressed_end_byte *= block_size;
+            args[i].compressed_end_byte *= (block_size / 8);
         }
 
         // Calculate the start and end bytes
