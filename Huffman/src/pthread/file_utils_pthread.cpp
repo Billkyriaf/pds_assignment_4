@@ -33,6 +33,52 @@ FILE *openBinaryFile(const char *filename, const char *mode) {
     return file;
 }
 
+/**
+ * Calculates the sha256 hash of the input and output files and compares the results
+ * @param input_file
+ * @param output_file
+ */
+void verifyFiles(const char *input_file, const char *output_file){
+    cout << "Verifying files..." << endl;
+
+    char command_1[100];  // The command to calculate the hash of the input file
+    char command_2[100];  // The command to calculate the hash of the output file
+
+    char input_sha[64];  // The sha256 hash of the input file
+    char output_sha[64];  // The sha256 hash of the output file
+
+    sprintf(command_1, "sha256sum %s", input_file);  // Create the command to calculate the hash of the input file
+    sprintf(command_2, "sha256sum %s", output_file);  // Create the command to calculate the hash of the output file
+
+    FILE *input;  // The file pointer to the input file
+    FILE *output;  // The file pointer to the output file
+
+    input = popen(command_1, "r");  // Open the input file
+    output = popen(command_2, "r");  // Open the output file
+
+    if (input == nullptr || output == nullptr){
+        cout << "Error opening the files..." << endl;
+        exit(-1);
+    }
+
+    fgets(input_sha, 64, input);  // Read the hash of the input file
+    fgets(output_sha, 64, output);  // Read the hash of the output file
+
+    // Check if the hashes are the same
+    if (strcmp(input_sha, output_sha) == 0){
+        cout << "\n  SHA256 TEST PASS" << endl;
+        cout << "    " << input_file << "          " << input_sha << endl;
+        cout << "    " << output_file << "      "<< output_sha << endl;
+    } else {
+        cout << "\n  SHA256 TEST FAIL" << endl;
+        cout << "    " << input_file << "          " << input_sha << endl;
+        cout << "    " << output_file << "      "<< output_sha << endl;
+    }
+
+    pclose(input);
+    pclose(output);
+}
+
 
 /**
  * A symbol is inserted in the buffer. If the buffer is full after the insertion the buffer is written to the compressed
@@ -600,7 +646,6 @@ void decompressFile(const char *filename){
 #endif
 
     for (int i = 0; i < n_sections; ++i) {
-
 
         /*
         * Start reading the input_file from start to finish. Reading one bit at a time and navigating the tree until a leaf node
