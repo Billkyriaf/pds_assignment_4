@@ -14,6 +14,14 @@ FILE *openBinaryFile(const char *filename, const char *mode);
 
 
 /**
+ * Calculates the sha256 hash of the input and output files and compares the results
+ * @param input_file
+ * @param output_file
+ */
+void verifyFiles(const char *input_file, const char *output_file);
+
+
+/**
  * Takes the file to be compressed reads the bits and creates a new compressed file.
  *
  * @param file       The original file

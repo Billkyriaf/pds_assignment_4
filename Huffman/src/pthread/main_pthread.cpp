@@ -106,5 +106,7 @@ int main(int argc, char **argv) {
     cout << "Overall elapsed time: ";
     displayElapsed(&overall_timer);
 
+    verifyFiles(input_file_name, decoded_file_name);
+
     return 0;
 }
