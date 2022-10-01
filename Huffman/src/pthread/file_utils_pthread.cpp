@@ -92,11 +92,11 @@ void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman, uint16_t *meta_data_s
     for (Symbol &symbol : huffman->symbols) {
         // Write the huffman table to the beginning of the file
         fwrite(&symbol.symbol, sizeof(huffman->symbols[0].symbol), 1, file);
-        *meta_data_size += sizeof(huffman->symbols[0].symbol);
+        *meta_data_size = *meta_data_size + sizeof(huffman->symbols[0].symbol);
 
         // Write the length of the symbol to the file
         fwrite(&symbol.symbol_length, sizeof(symbol.symbol_length), 1, file);
-        *meta_data_size += sizeof(symbol.symbol_length);
+        *meta_data_size = *meta_data_size + sizeof(symbol.symbol_length);
     }
 }
 
@@ -142,18 +142,8 @@ void *compressFileRunnable(void *args) {
     // Open the file to be compressed
     FILE *file = openBinaryFile(arguments->file, "rb");
 
-    if (file == nullptr) {
-        printf("File not found...\n");
-        exit(-1);
-    }
-
     // Open the compressed file
     FILE *compressed = openBinaryFile(arguments->output_file, "rb+");
-
-    if (compressed == nullptr) {
-        printf("File not found...\n");
-        exit(-1);
-    }
 
     // Seek the start of the file to the starting byte
     fseek(file, (long int)arguments->start_byte, SEEK_SET);
@@ -266,14 +256,14 @@ void *compressFileRunnable(void *args) {
  *      .
  *      .
  *      Byte 25:26     The block size used to group data (uint16_t)
- *      Byte 27:8483   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
+ *      Byte 27:8474   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
  *                     by the symbol are written as well as an 8 bit number. The size of the table is 256 x (256 + 8) bits
- *      Byte 8484:end  The compressed data
+ *      Byte 8475:end  The compressed data
  *
  * @param file       The original file
  * @param filename   The filename of the compressed file
  * @param huffman    The huffman struct that contains the information for the compression
- * @param block_size The size in bytes of the data that every write operation writes to the file. (must be power of 2)
+ * @param block_size The size in bits of the data that every write operation writes to the file. (must be power of 2)
  */
 void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_size) {
 
@@ -290,12 +280,7 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     // Create the new file
     FILE *compressed = openBinaryFile(newFilename, "wb");
 
-    if (compressed == nullptr) {
-        cout << "\n\nCould not create file" << endl;
-        exit(1);
-    }
-
-    uint16_t meta_data_size = 0;  // The size of the meta data in bytes
+    uint16_t meta_data_size = 0;  // The size of the metadata in bytes
 
     // STEP 1 - Write the number of sections
     uint8_t n_sections = N_THREADS;  // The number of sections the file is divided to
@@ -310,7 +295,7 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     // STEP 3 - Write the number of blocks of each section (updated in the end)
     uint32_t n_blocks[N_THREADS] = {0};  // The number of blocks written to the file
     fwrite(&n_blocks, sizeof(n_blocks[0]), N_THREADS, compressed);  // Write the number of blocks.
-    meta_data_size += sizeof(n_blocks) * N_THREADS;  // Update the meta data size
+    meta_data_size += sizeof(n_blocks[0]) * N_THREADS;  // Update the meta data size
 
     // STEP 4 - Write the block size used to group data to the compressed file.
     fwrite(&block_size, sizeof(block_size), 1, compressed);
@@ -346,19 +331,19 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
         }
 
         // if the number of bits don't align to the block size
-        if (args[i].compressed_end_byte % (block_size * 8) != 0) {
+        if (args[i].compressed_end_byte % block_size != 0) {
             // This is the number of blocks required
-            args[i].compressed_end_byte = (args[i].compressed_end_byte / (block_size * 8)) + 1;
+            args[i].compressed_end_byte = (args[i].compressed_end_byte / block_size) + 1;
 
             // Convert the number of blocks to bytes
-            args[i].compressed_end_byte *= block_size;
+            args[i].compressed_end_byte *= (block_size / 8);
         }
         else {
             // This is the number of blocks required
-            args[i].compressed_end_byte /= (block_size * 8);
+            args[i].compressed_end_byte /= block_size;
 
             // Convert the number of blocks to bytes
-            args[i].compressed_end_byte *= block_size;
+            args[i].compressed_end_byte *= (block_size / 8);
         }
 
         // Calculate the start and end bytes
@@ -388,6 +373,7 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     }
 
 #ifdef DEBUG_MODE
+    cout << "\n\nmetadata size: " << meta_data_size << endl;
     for (int i = 0; i< N_THREADS; i++) {
         cout << "\n\n" << endl;
         cout << "Thread " << args[i].t_id << " will compress bytes " << args[i].start_byte << " to " << args[i].end_byte << endl;
@@ -472,7 +458,7 @@ inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *n
             if (bit == 0) { // If the bit is 0 take the left path of the tree
                 *node = nodes[node->left];
 
-            } else { // Else the bit is 1 and we take the right path of the tree
+            } else { // Else the bit is 1, and we take the right path of the tree
                 *node = nodes[node->right];
             }
 
@@ -507,17 +493,23 @@ inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *n
  *
  *   Step 1: Read the meta data from of the file.
  *
- *           Byte 0:3       The number of the padding bits added to the end of the file (uint32_t)
- *
- *           Byte 4:7       The number of blocks in the file (uint32_t)
- *
- *           Byte 8:9       The block size used to group data (uint16_t)
- *
- *           Byte 10:8457   The huffman table used to compress the file. After every 256 bit symbol the number of bits
- *                          used by the symbol are written as well as an 8 bit number.
- *                          The size of the table is 256 x (256 + 8) bits
- *
- *           Byte 8457:end  The compressed data
+ *      Byte 0         The number of sections in the file (uint8_t)  (In this example 3)
+ *      Byte 1:4       The number of the padding bits added to the end of the first section (uint32_t)
+ *      Byte 5:8       The number of the padding bits added to the end of the second section (uint32_t)
+ *      Byte 9:12      The number of the padding bits added to the end of the third section (uint32_t)
+ *      .
+ *      .
+ *      .
+ *      Byte 13:16     The number of blocks in the first section (uint32_t)
+ *      Byte 17:20     The number of blocks in the second section (uint32_t)
+ *      Byte 21:24     The number of blocks in the third section (uint32_t)
+ *      .
+ *      .
+ *      .
+ *      Byte 25:26     The block size used to group data (uint16_t)
+ *      Byte 27:8483   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
+ *                     by the symbol are written as well as an 8 bit number. The size of the table is 256 x (256 + 8) bits
+ *      Byte 8484:end  The compressed data
  *
  *   Step 2: Create the Huffman tree from the huffman table
  *
@@ -526,60 +518,71 @@ inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *n
  * @param filename  The name of the file to be decompressed
  */
 void decompressFile(const char *filename){
-    // Open the decompressed file in read mode
-    FILE *file = openBinaryFile(filename, "rb");
 
-    // Create a new file for decompression
+    // Create a new input_file for decompression
     int len = (int) strlen(filename); // Get the length of the old filename
 
-    char *newFilename = (char *) malloc((len - 1) * sizeof(char));  // Allocate enough space for the new file name
+    char *newFilename = (char *) malloc((len - 1) * sizeof(char));  // Allocate enough space for the new input_file name
 
     memcpy(newFilename, filename, sizeof(char) * (len - 5));  // Copy the old name to the new name
 
-    char end[5] = ".dec";  // The string to be appended to the file name
+    char end[5] = ".dec";  // The string to be appended to the input_file name
 
-    memcpy(newFilename + len - 5, end, sizeof(char) * 5);  // Append the ending to the file name
+    memcpy(newFilename + len - 5, end, sizeof(char) * 5);  // Append the ending to the input_file name
 
-    // Create the new file
+    // Create the new input_file
     FILE *decompressed = openBinaryFile(newFilename, "wb");
 
-    if (decompressed == nullptr) {
-        cout << "\n\nCould not create file" << endl;
-        exit(1);
-    }
+    // Open the decompressed input_file in read mode
+    FILE *input_file = openBinaryFile(filename, "rb");
 
     free(newFilename);  // free the no longer needed memory
 
-    // This is the number of padding bits to the end of the file. The padding bits align the data to bytes.
-    uint32_t padding_bits = 0;
-
-    // The number of blocks written to the file
-    uint32_t n_blocks = 0;
-
-    // The block size used to group data during the compression
-    uint16_t block_size = 0;
+    // Start reading the metadata from the input file
 
 #ifdef DEBUG_MODE
     cout << "    Reading metadata..." << endl;
 #endif
 
-    // Read the numbers from the file
-    fread(&padding_bits, sizeof(padding_bits), 1, file);
-    fread(&n_blocks, sizeof(n_blocks), 1, file);
-    fread(&block_size, sizeof(block_size), 1, file);
+    // STEP 1 - Read the number of sections
+    uint8_t n_sections;  // The number of sections is yhe number of threads used to compress the file
+    fread(&n_sections, sizeof(uint8_t), 1, input_file);  // read the number of sections
+
+    // STEP 2 - Read the number of padding bits of each section
+    auto *section_padding = (uint32_t *) malloc(n_sections * sizeof(uint32_t));
+    fread(section_padding, sizeof(uint32_t), n_sections, input_file);
+
+    // STEP 3 - Read the number of blocks of each section
+    auto *n_blocks = (uint32_t *) malloc(n_sections * sizeof(uint32_t));
+    fread(n_blocks, sizeof(uint32_t), n_sections, input_file);
+
+    // STEP 4 - Read the block size used to group data to the compressed file.
+    uint16_t block_size;
+    fread(&block_size, sizeof(block_size), 1, input_file);
 
     // Retrieve the huffman info
     ASCIIHuffman huffman;
 
     for (Symbol &symbol : huffman.symbols) {
-        // Read all the symbols from the file
-        fread(&symbol.symbol, sizeof(huffman.symbols[0].symbol), 1, file);
-        fread(&symbol.symbol_length, sizeof(huffman.symbols[0].symbol_length), 1, file);
+        // Read all the symbols from the input_file
+        fread(&symbol.symbol, sizeof(huffman.symbols[0].symbol), 1, input_file);
+        fread(&symbol.symbol_length, sizeof(huffman.symbols[0].symbol_length), 1, input_file);
     }
 
 #ifdef DEBUG_MODE
-    cout << "\n\nPadding bits: " << padding_bits << ", Blocks: " << n_blocks << ", block size: " << block_size << endl;
-    cout << "\nRead Huffman symbols:" << endl;
+    cout << "\n\nPadding bits:" << endl;
+    for (int i = 0; i < n_sections; ++i) {
+        cout << "    Section " << i << ", has " << section_padding[i] << " bits" <<endl;
+    }
+
+    cout << "\nNumber of blocks:" << endl;
+    for (int i = 0; i < n_sections; ++i) {
+        cout << "    Section " << i << ", has " << n_blocks[i] << " blocks" <<endl;
+    }
+
+    cout << "\nBlock size: " << block_size << endl;
+
+    cout << "\n\nRead Huffman symbols:" << endl;
 
     // Print the symbol array
     for (auto & symbol : huffman.symbols) {
@@ -596,64 +599,71 @@ void decompressFile(const char *filename){
     printTree(nodes, root_index);
 #endif
 
-    /*
-     * Start reading the file from start to finish. Reading one bit at a time and navigating the tree until a leaf node
-     * is reached.
-     */
-    uint16_t buffer_size = block_size / SYM_BUFF_SIZE;
-
-    /*
-     * The buffer holds the data to be written to the file. Once the buffer is full the data are written to the file
-     * and the buffer is overwritten with the next part of data. The process repeats until the end
-     */
-    auto *buffer = (uint128_t *) calloc(buffer_size, sizeof(uint128_t));
+    for (int i = 0; i < n_sections; ++i) {
 
 
-    uint8_t char_buffer[CHAR_BUFF_SIZE];    // The decompressed character
-    uint32_t c_index = 0;         // The character buffer index
+        /*
+        * Start reading the input_file from start to finish. Reading one bit at a time and navigating the tree until a leaf node
+        * is reached.
+        */
+        uint16_t buffer_size = block_size / SYM_BUFF_SIZE;
 
-    HuffmanNode node = nodes[root_index];  // The current node of the tree.
+        /*
+         * The buffer holds the data to be written to the input_file. Once the buffer is full the data are written to the input_file
+         * and the buffer is overwritten with the next part of data. The process repeats until the end
+         */
+        auto *buffer = (uint128_t *) calloc(buffer_size, sizeof(uint128_t));
 
-    // If the file has only one block skip to the final block handling
-    if (n_blocks > 1) {
-        // For all the blocks in the file except the last one...
-        do {
-            // read the symbol bits from the compressed file
-            fread(&buffer[0], sizeof(buffer[0].lower()), buffer_size * 2, file);
 
-            // decode the buffer
-            decodeBuffer(nodes, root_index, &node, buffer, 0, buffer_size, SYM_BUFF_SIZE,
-                         char_buffer, &c_index, decompressed);
+        uint8_t char_buffer[CHAR_BUFF_SIZE];    // The decompressed character
+        uint32_t c_index = 0;         // The character buffer index
 
-            // Update the remaining blocks number
-            n_blocks--;
+        HuffmanNode node = nodes[root_index];  // The current node of the tree.
 
-        } while (n_blocks != 1);
+        // If the input_file has only one block skip to the final block handling
+        if (n_blocks[i] > 1) {
+            // For all the blocks in the input_file except the last one...
+            do {
+                // read the symbol bits from the compressed input_file
+                fread(&buffer[0], sizeof(buffer[0].lower()), buffer_size * 2, input_file);
+
+                // decode the buffer
+                decodeBuffer(nodes, root_index, &node, buffer, 0, buffer_size, SYM_BUFF_SIZE,
+                             char_buffer, &c_index, decompressed);
+
+                // Update the remaining blocks number
+                n_blocks[i]--;
+
+            } while (n_blocks[i] != 1);
+        }
+
+        // The last block may contain padding bits that shouldn't be interpreted as symbols
+        fread(&buffer[0], sizeof(buffer[0].lower()), buffer_size * 2, input_file);  // Read the last block
+
+        // Get the number of full elements of the buffer
+        buffer_size -= section_padding[i] / SYM_BUFF_SIZE;
+
+        // decode the buffer except the last buffer element
+        decodeBuffer(nodes, root_index, &node, buffer, 0, buffer_size - 1, SYM_BUFF_SIZE,
+                     char_buffer, &c_index, decompressed);
+
+        // The last element that contains symbol bits may contain some padding bits also
+        // The number of symbol bits on the last element of the buffer
+        uint8_t useful_bits = SYM_BUFF_SIZE - section_padding[i] % SYM_BUFF_SIZE;
+
+        // decode the last element of the buffer
+        decodeBuffer(nodes, root_index, &node, buffer, buffer_size - 1, buffer_size, useful_bits,
+                     char_buffer, &c_index, decompressed);
+
+        // Write the remaining chars
+        fwrite(char_buffer, sizeof(char_buffer[0]), c_index, decompressed);
+
+        free(buffer);
     }
 
-    // The last block may contain padding bits that shouldn't be interpreted as symbols
-    fread(&buffer[0], sizeof(buffer[0].lower()), buffer_size * 2, file);  // Read the last block
-
-    // Get the number of full elements of the buffer
-    buffer_size -= padding_bits / SYM_BUFF_SIZE;
-
-    // decode the buffer except the last buffer element
-    decodeBuffer(nodes, root_index, &node, buffer, 0, buffer_size - 1, SYM_BUFF_SIZE,
-                 char_buffer, &c_index, decompressed);
-
-    // The last element that contains symbol bits may contain some padding bits also
-    // The number of symbol bits on the last element of the buffer
-    uint8_t useful_bits = SYM_BUFF_SIZE - padding_bits % SYM_BUFF_SIZE;
-
-    // decode the last element of the buffer
-    decodeBuffer(nodes, root_index, &node, buffer, buffer_size - 1, buffer_size, useful_bits,
-                 char_buffer, &c_index, decompressed);
-
-    // Write the remaining chars
-    fwrite(char_buffer, sizeof(char_buffer[0]), c_index, decompressed);
-
     fclose(decompressed);
-    fclose(file);
+    fclose(input_file);
 
-    free(buffer);
+    free(section_padding);
+    free(n_blocks);
 }
