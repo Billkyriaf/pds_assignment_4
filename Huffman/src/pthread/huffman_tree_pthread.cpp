@@ -127,7 +127,7 @@ void calculateFrequency(const char *filename, ASCIIHuffman *huffman) {
 
         if (i == N_THREADS - 1) {
             thread_args[i].start_byte = i * b_per_thr;
-            thread_args[i].end_byte = i * b_per_thr + last_b_per_thr + 1;
+            thread_args[i].end_byte = i * b_per_thr + last_b_per_thr;
 
         } else {
             thread_args[i].start_byte = i * b_per_thr;
