@@ -1,11 +1,11 @@
 #include <cstring>
 #include <iostream>
 
-#include "../../include/structs.h"
+#include "../structs.h"
+#include "../huffman.h"
 
 #include "decompress_pth.h"
-#include "huffman_pth.h"
-#include "file_utils_pth.h"
+#include "../file_utils.h"
 
 #define CHAR_BUFF_SIZE 2048  // The size of the write buffer
 #define SYM_BUFF_SIZE 128   // The size of the read buffer single element

@@ -1,12 +1,12 @@
 #include <iostream>
 
-#include "../../include/timer/timer.h"
-#include "../../include/structs.h"
+#include "../timer.h"
+#include "../structs.h"
+#include "../huffman.h"
 #include "char_frequency_pth.h"
 #include "compress_pth.h"
 #include "decompress_pth.h"
-#include "file_utils_pth.h"
-#include "huffman_pth.h"
+#include "../file_utils.h"
 
 //#define DEBUG_MODE
 

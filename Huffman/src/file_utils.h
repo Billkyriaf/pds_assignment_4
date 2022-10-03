@@ -20,4 +20,4 @@ FILE *openBinaryFile(const char *filename, const char *mode);
  */
 void verifyFiles(const char *input_file, const char *output_file);
 
-#endif //FILE_UTILS_PTH_H
+#endif

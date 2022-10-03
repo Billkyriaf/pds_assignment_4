@@ -1,18 +1,7 @@
-#ifndef HUFFMAN_TREE
-#define HUFFMAN_TREE
+#ifndef HUFFMAN_H
+#define HUFFMAN_H
 
-#include <cstdio>
-
-#include "../../include/structs.h"
-
-/**
- * Counts the character frequency of every ascii char of the file being compressed
- *
- * @param filename  The file name to count the frequencies from
- * @param huffman   The huffman struct
- */
-void charFrequency(const char *filename, ASCIIHuffman *huffman);
-
+#include "structs.h"
 
 /**
  * Prints the huffman tree

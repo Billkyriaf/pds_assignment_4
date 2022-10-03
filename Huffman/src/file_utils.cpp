@@ -1,6 +1,6 @@
 #include <cstring>
 
-#include "file_utils_pth.h"
+#include "file_utils.h"
 
 using namespace std;
 
@@ -18,7 +18,7 @@ FILE *openBinaryFile(const char *filename, const char *mode) {
     file = fopen(filename, mode);
 
     if (file == nullptr) {
-        printf("File not found...\n");
+        cout << "File not found..." << endl;
         exit(-1);
     }
 

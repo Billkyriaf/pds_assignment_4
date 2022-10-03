@@ -1,9 +1,12 @@
-#include <cstdio>
 #include <iostream>
 
-#include "file_utils.h"
-#include "huffman_tree.h"
-#include "../../include/timer/timer.h"
+#include "../timer.h"
+#include "../huffman.h"
+#include "../file_utils.h"
+#include "char_frequency.h"
+#include "compress.h"
+#include "decompress.h"
+
 
 //#define DEBUG_MODE
 
@@ -21,6 +24,7 @@ int main() {
     // Create the file names (temp solution)
     const char *input_file_name = "./data/test_1";
     const char *output_file_name = "./data/test_1.huff";
+    const char *decoded_file_name = "./data/test_6.dec";
 
     // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {
@@ -98,6 +102,8 @@ int main() {
     stopTimer(&overall_timer);
     cout << "Overall elapsed time: ";
     displayElapsed(&overall_timer);
+
+    verifyFiles(input_file_name, decoded_file_name);
 
     return 0;
 }

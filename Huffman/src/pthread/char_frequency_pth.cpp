@@ -2,7 +2,7 @@
 #include <pthread.h>
 
 #include "char_frequency_pth.h"
-#include "file_utils_pth.h"
+#include "../file_utils.h"
 
 //#define DEBUG_MODE
 

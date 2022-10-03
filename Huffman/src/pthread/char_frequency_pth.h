@@ -1,7 +1,7 @@
 #ifndef CHAR_FREQUENCY_PTH_H
 #define CHAR_FREQUENCY_PTH_H
 
-#include "../../include/structs.h"
+#include "../structs.h"
 
 
 /**

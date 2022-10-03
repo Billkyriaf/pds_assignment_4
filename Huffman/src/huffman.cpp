@@ -1,68 +1,8 @@
 #include <iostream>
-#include <cmath>
 
-#include "huffman_tree.h"
-#include "file_utils.h"
+#include "huffman.h"
 
-#define SCAN_SIZE 1 * 1024 * 1024 * 1024  // 1GB
 //#define DEBUG_MODE
-
-
-/**
- * Counts the character frequency of every ascii char of the file being compressed. The ascii characters are 8 bits long
- * This produces potentially long symbols that are hard to manage. For this reason every char is split in two 4 bit parts
- * This produces 16 different chars and a maximum length of huffman symbols of 15.
- *
- * Since the number of different characters is low the huffman tree can be calculated for all the characters even if they
- * are not present. This allows to measure the frequency of the characters on a small part of the file and assume the
- * file is relatively consistent. The larger the area of the file accounted the more accurate the results but the longer
- * it takes to measure
- *
- * @param file     The file to count the frequencies
- * @param huffman  The huffman struct
- */
-void charFrequency(const char *filename, ASCIIHuffman *huffman) {
-    FILE *file = openBinaryFile(filename, "rb");
-
-    uint8_t c;  // The character read from the file
-
-    fseek(file, 0, SEEK_END);  // Jump to the end of the file
-    unsigned long int file_len = ftell(file);  // Get the current byte offset in the file
-
-    rewind(file);  // Jump back to the beginning of the file
-
-    uint64_t scan_size = file_len;
-
-/*    // Determine the scan_size of the file
-    if (file_len > SCAN_SIZE)
-        scan_size = SCAN_SIZE;
-    else
-        scan_size = file_len;*/
-
-    // Read from the file byte by byte
-    for (unsigned long int i = 0; i < scan_size; ++i) {
-        fread(&c, sizeof(c), 1, file);
-
-        // For every half char read update the frequency
-        huffman->charFreq[c]++;
-    }
-}
-
-
-/**
- * Shifts the bit by length to the left and adds the new bit in the msb position of the symbol
- *
- * @param sym   Pointer to the symbol to update
- * @param bit   The bit to append
- */
-void addBitToSymbol(Symbol *sym, uint8_t bit) {
-
-    // Left shift the symbol to make space for the new bit
-    sym->symbol = (sym->symbol << 1) + bit;
-
-    // Update the symbol length
-    sym->symbol_length += 1;
-}
 
 
 /**
@@ -120,6 +60,22 @@ void printTree(HuffmanNode *nodes, uint16_t nodes_index) {
 
 
 /**
+ * Shifts the bit by length to the left and adds the new bit in the msb position of the symbol
+ *
+ * @param sym   Pointer to the symbol to update
+ * @param bit   The bit to append
+ */
+void addBitToSymbol(Symbol *sym, uint8_t bit) {
+
+    // Left shift the symbol to make space for the new bit
+    sym->symbol = (sym->symbol << 1) + bit;
+
+    // Update the symbol length
+    sym->symbol_length += 1;
+}
+
+
+/**
  * Recursive function that updates the huffman symbols of the leaf nodes. The nodes are updated from the top to the
  * bottom so every time the function is called the new bit is added to the LSB of the sym.
  *
@@ -128,7 +84,7 @@ void printTree(HuffmanNode *nodes, uint16_t nodes_index) {
  * @param sym           The huffman symbol up to that depth
  * @param nodes         The array of the tree nodes
  */
-void updateSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol sym, HuffmanNode *nodes) {
+void createSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol sym, HuffmanNode *nodes) {
 
     // Termination condition. If the node is a leaf node ...
     if (rootNode->isLeaf) {
@@ -152,12 +108,12 @@ void updateSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol sym
 
     if (nodes[rootNode->left].isInTree) {
         // The function is called recursively for the left ...
-        updateSymbols(asciiHuffman, &nodes[rootNode->left], left_symbol, nodes);
+        createSymbols(asciiHuffman, &nodes[rootNode->left], left_symbol, nodes);
     }
 
     if (nodes[rootNode->right].isInTree) {
         // ...and for the right child
-        updateSymbols(asciiHuffman, &nodes[rootNode->right], right_symbol, nodes);
+        createSymbols(asciiHuffman, &nodes[rootNode->right], right_symbol, nodes);
     }
 }
 
@@ -169,8 +125,9 @@ void updateSymbols(ASCIIHuffman *asciiHuffman, HuffmanNode *rootNode, Symbol sym
  */
 void createHuffmanTree(ASCIIHuffman *asciiHuffman) {
     /*
-     * The maximum nodes a huffman tree with 16 different symbols can have is 31. The nodes array holds all the nodes
+     * The maximum nodes a huffman tree with 256 different symbols can have is 511. The nodes array holds all the nodes
      * of the tree. The symbols are updated as the tree builds.
+     *
      */
     HuffmanNode nodes[511];
     uint16_t nodes_index;  // The index of the last node inserted
@@ -237,12 +194,13 @@ void createHuffmanTree(ASCIIHuffman *asciiHuffman) {
     sym.symbol = 0;
 
     // After the tree is complete all the symbols are updated
-    updateSymbols(asciiHuffman, &nodes[nodes_index - 1], sym, nodes);
+    createSymbols(asciiHuffman, &nodes[nodes_index - 1], sym, nodes);
 
 #ifdef DEBUG_MODE
     printTree(nodes, nodes_index - 1);
 #endif
 }
+
 
 /**
  * Creates a huffman tree from an array with the huffman symbols. The depth of every symbol is determined from the

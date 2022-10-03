@@ -1,8 +1,7 @@
-#ifndef COMPRESS_PTH_H
-#define COMPRESS_PTH_H
+#ifndef COMPRESS_H
+#define COMPRESS_H
 
 #include "../structs.h"
-
 
 /**
  * Takes the file to be compressed reads the bits and creates a new compressed file.

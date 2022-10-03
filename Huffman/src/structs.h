@@ -3,7 +3,7 @@
 
 #include <cinttypes>
 
-#include "uint256/uint256_t.h"
+#include "../include/uint256/uint256_t.h"
 
 #define N_THREADS 16
 
