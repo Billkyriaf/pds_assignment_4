@@ -1,7 +1,7 @@
 #include "char_frequency.h"
 #include "../file_utils.h"
 
-#define SCAN_SIZE 1 * 1024 * 1024 * 1024  // 1GB
+#define SCAN_SIZE (1 * 1024 * 1024 * 1024)  // 1GB
 //#define DEBUG_MODE
 
 
