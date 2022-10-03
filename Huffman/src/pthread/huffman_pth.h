@@ -1,17 +1,7 @@
-#ifndef HUFFMAN_TREE_PTH_H
-#define HUFFMAN_TREE_PTH_H
+#ifndef HUFFMAN_PTH_H
+#define HUFFMAN_PTH_H
 
 #include "../../include/structs.h"
-
-
-/**
- * Divides the frequency calculation work between threads and then creates the threads to actually calculate the
- * frequencies
- *
- * @param filename The input file name (to be compressed)
- * @param huffman  The huffman struct
- */
-void calculateFrequency(const char *filename, ASCIIHuffman *huffman);
 
 
 /**

@@ -1,5 +1,5 @@
-#ifndef HUFFMAN_STRUCTS_H
-#define HUFFMAN_STRUCTS_H
+#ifndef STRUCTS_H
+#define STRUCTS_H
 
 #include <cinttypes>
 
@@ -71,4 +71,4 @@ typedef struct huffman_node{
 
 } HuffmanNode;
 
-#endif //HUFFMAN_STRUCTS_H
+#endif //STRUCTS_H
