@@ -50,11 +50,11 @@ void verifyFiles(const char *input_file, const char *output_file){
     sprintf(command_1, "sha256sum %s", input_file);  // Create the command to calculate the hash of the input file
     sprintf(command_2, "sha256sum %s", output_file);  // Create the command to calculate the hash of the output file
 
-    FILE *input;  // The file pointer to the input file
-    FILE *output;  // The file pointer to the output file
+    FILE *input;  // The file pointer to the input pipe
+    FILE *output;  // The file pointer to the output pipe
 
-    input = popen(command_1, "r");  // Open the input file
-    output = popen(command_2, "r");  // Open the output file
+    input = popen(command_1, "r");  // Open the input pipe
+    output = popen(command_2, "r");  // Open the output pipe
 
     if (input == nullptr || output == nullptr){
         cout << "Error opening the files..." << endl;
@@ -75,8 +75,8 @@ void verifyFiles(const char *input_file, const char *output_file){
         cout << "    " << output_file << "      "<< output_sha << endl;
     }
 
-    pclose(input);
-    pclose(output);
+    pclose(input);  // Close the input pipe
+    pclose(output);  // Close the output pipe
 }
 
 

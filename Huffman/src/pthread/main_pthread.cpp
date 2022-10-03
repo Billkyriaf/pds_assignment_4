@@ -20,6 +20,7 @@ int main(int argc, char **argv) {
     // Create the file names (temp solution)
     const char *input_file_name = "./data/test_1";
     const char *output_file_name = "./data/test_1.huff";
+    const char *decoded_file_name = "./data/test_6.dec";
 
     // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {
