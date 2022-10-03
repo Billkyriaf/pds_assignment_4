@@ -32,5 +32,19 @@ add_executable(HuffmanPthread
         src/pthread/compress_pth.cpp
         src/pthread/decompress_pth.cpp
 )
-
 target_link_libraries(HuffmanPthread pthread)
+
+add_executable(HuffmanCilk
+        include/uint256/uint128_t.cpp
+        include/uint256/uint256_t.cpp
+        src/serial/main.cpp
+        src/file_utils.cpp
+        src/huffman.cpp
+        src/structs.h
+        src/timer.cpp
+        src/serial/char_frequency.cpp
+        src/serial/compress.cpp
+        src/serial/decompress.cpp
+)
+
+target_link_libraries(HuffmanCilk -fopencilk)
