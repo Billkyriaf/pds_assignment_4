@@ -37,14 +37,13 @@ target_link_libraries(HuffmanPthread pthread)
 add_executable(HuffmanCilk
         include/uint256/uint128_t.cpp
         include/uint256/uint256_t.cpp
-        src/serial/main.cpp
+        src/cilk/main_cilk.cpp
         src/file_utils.cpp
         src/huffman.cpp
         src/structs.h
         src/timer.cpp
-        src/serial/char_frequency.cpp
-        src/serial/compress.cpp
-        src/serial/decompress.cpp
+        src/cilk/char_frequency_cilk.cpp
+        src/cilk/compress_cilk.cpp
+        src/cilk/decompress_cilk.cpp
 )
-
 target_link_libraries(HuffmanCilk -fopencilk)
