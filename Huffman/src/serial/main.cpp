@@ -1,19 +1,21 @@
+#define SERIAL_MODE  // This define is used to determine which main is being used
+
 #include <iostream>
 
 #include "../timer.h"
+#include "../structs.h"
 #include "../huffman.h"
 #include "../file_utils.h"
 #include "char_frequency.h"
 #include "compress.h"
 #include "decompress.h"
 
-
 //#define DEBUG_MODE
-
 
 using namespace std;
 
-int main() {
+
+int main(int argc, char **argv) {
     // The huffman struct
     ASCIIHuffman huffman;
 
@@ -46,16 +48,16 @@ int main() {
     cout << "Frequency elapsed time: ";
     displayElapsed(&timer);
 
-#ifdef DEBUG_MODE
-    cout << "Characters frequency: " << endl;
+    #ifdef DEBUG_MODE
+        cout << "Characters frequency: " << endl;
 
-    // Print the frequency array
-    for (int i = 0; i < 255; ++i) {
-        cout << huffman.charFreq[i] << ", ";
-    }
+        // Print the frequency array
+        for (int i = 0; i < 255; ++i) {
+            cout << huffman.charFreq[i] << ", ";
+        }
 
-    cout <<  huffman.charFreq[255] << endl;
-#endif
+        cout <<  huffman.charFreq[255] << endl;
+    #endif
 
     cout << "Calculating symbols..." << endl;
 
@@ -68,14 +70,14 @@ int main() {
     cout << "Symbols elapsed time: ";
     displayElapsed(&timer);
 
-#ifdef DEBUG_MODE
-    cout << "\n\nHuffman symbols: \n" << endl;
+    #ifdef DEBUG_MODE
+        cout << "\n\nHuffman symbols: \n" << endl;
 
-    // Print the symbol array
-    for (Symbol &symbol : huffman.symbols) {
-        cout << "len: " << unsigned(symbol.symbol_length) << ", sym: " << hex << symbol.symbol << dec << endl;
-    }
-#endif
+        // Print the symbol array
+        for (Symbol &symbol : huffman.symbols) {
+            cout << "len: " << unsigned(symbol.symbol_length) << ", sym: " << hex << symbol.symbol << dec << endl;
+        }
+    #endif
 
     cout << "Compressing file..." << endl;
 
