@@ -1,14 +1,15 @@
-#ifndef CHAR_FREQUENCY_H
-#define CHAR_FREQUENCY_H
+#ifndef CHAR_FREQUENCY_CILK_H
+#define CHAR_FREQUENCY_CILK_H
 
 #include "../structs.h"
 
 /**
- * Counts the character frequency of every ascii char of the file being compressed
+ * Divides the frequency calculation work between threads and then creates the threads to actually calculate the
+ * frequencies
  *
- * @param filename  The file name to count the frequencies from
- * @param huffman   The huffman struct
+ * @param filename The input file name (to be compressed)
+ * @param huffman  The huffman struct
  */
-void charFrequency(const char *filename, ASCIIHuffman *huffman);
+void calculateFrequency(const char *filename, ASCIIHuffman *huffman);
 
 #endif
