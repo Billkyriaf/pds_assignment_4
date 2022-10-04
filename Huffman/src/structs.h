@@ -6,6 +6,8 @@
 #include "../include/uint256/uint256_t.h"
 
 #define N_THREADS 16
+#define CILK_JOBS 32
+
 
 /**
  * This is a single symbol for an ascii character. Every character is 4bits long. That means there are 16 different
@@ -31,10 +33,10 @@ typedef struct symbol {
 
 
 /**
- * In half ascii huffman the bits of the file are translated as half ascii characters (4 bits each). So there are 16
+ * In ascii huffman the bits of the file are translated as ascii characters (8 bits each). So there are 256
  * possible "characters". The file doesn't have to be ascii characters because the data are managed in binary
  */
-typedef struct half_ascii_huffman {
+typedef struct ascii_huffman {
 
     /**
      * The symbols array stores the encoded huffman symbol for every possible character.
@@ -47,10 +49,16 @@ typedef struct half_ascii_huffman {
     uint64_t charFreq[256];
 
     /**
-     * The frequency of every symbol measured by the threads
+     * The frequency of every symbol measured by the threads. Depending on which main is running the array has a
+     * different size
      */
-    uint64_t frequencies[N_THREADS][256];
-
+    #if defined(PTHREAD_MODE) || defined(SERIAL_MODE)
+        uint64_t frequencies[N_THREADS][256];
+    #elif defined(CILK_MODE)
+        uint64_t frequencies[CILK_JOBS][256];
+    #else
+        uint64_t frequencies[N_THREADS][256];
+    #endif
 } ASCIIHuffman;
 
 
