@@ -6,7 +6,7 @@
 #include "../include/uint256/uint256_t.h"
 
 #define N_THREADS 16
-#define CILK_JOBS 32
+#define CILK_JOBS 16
 
 
 /**
