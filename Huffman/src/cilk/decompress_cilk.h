@@ -1,5 +1,5 @@
-#ifndef DECOMPRESS_H
-#define DECOMPRESS_H
+#ifndef DECOMPRESS_CILK_H
+#define DECOMPRESS_CILK_H
 
 /**
  * Decompresses a file
@@ -9,3 +9,4 @@
 void decompressFile(const char *filename);
 
 #endif
+
