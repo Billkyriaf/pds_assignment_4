@@ -26,7 +26,7 @@
 
 ## 1. About This Project
 
-The objective of this project is to compare the the pthreads and openCilk multithreading systems. The project is based on the implementation of a parallel Huffman file compression algorithm. The main points of comparison are the functionalities, the performance and the ease of use of the two multithreading systems. The project is implemented in C++ but the logic of the algorithm is based on the C language. The C++ language was used for compatibility reasons with the uint256_t library (see [dependencies](https://github.com/Billkyriaf/pds_assignment_4#dependencies)).
+The objective of this project is to compare the the pthreads and openCilk multithreading systems. The project is based on the implementation of a parallel Huffman file compression algorithm. The main points of comparison are the functionalities, the performance and the ease of use of the two multithreading systems. The project is implemented in C++ but the logic of the algorithm is based on the C language. The C++ language was used for compatibility reasons with the uint256_t library (see [dependencies](https://github.com/Billkyriaf/pds_assignment_4#3-dependencies)).
 
 ## 2. Getting Started
 
