@@ -10,6 +10,7 @@
 
 //#define DEBUG_MODE
 
+using namespace std;
 
 /**
  * A symbol is inserted in the buffer. If the buffer is full after the insertion the buffer is written to the compressed
@@ -220,22 +221,28 @@ void *compressFileRunnable(void *args) {
  * Takes the file to be compressed reads the bits and creates a new compressed file. The compressed file has the
  * following format:
  *      Byte 0         The number of sections in the file (uint8_t)  (In this example 3)
- *      Byte 1:4       The number of the padding bits added to the end of the first section (uint32_t)
- *      Byte 5:8       The number of the padding bits added to the end of the second section (uint32_t)
- *      Byte 9:12      The number of the padding bits added to the end of the third section (uint32_t)
+ *      Byte 1:8       The number of characters of the first section (uint64_t)
+ *      Byte 9:16      The number of characters of the second section (uint64_t)
+ *      Byte 17:24     The number of characters of the third section (uint64_t)
  *      .
  *      .
  *      .
- *      Byte 13:16     The number of blocks in the first section (uint32_t)
- *      Byte 17:20     The number of blocks in the second section (uint32_t)
- *      Byte 21:24     The number of blocks in the third section (uint32_t)
+ *      Byte 45:28     The number of the padding bits added to the end of the first section (uint32_t)
+ *      Byte 29:32     The number of the padding bits added to the end of the second section (uint32_t)
+ *      Byte 33:36     The number of the padding bits added to the end of the third section (uint32_t)
  *      .
  *      .
  *      .
- *      Byte 25:26     The block size used to group data (uint16_t)
- *      Byte 27:8474   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
+ *      Byte 37:40     The number of blocks in the first section (uint32_t)
+ *      Byte 41:44     The number of blocks in the second section (uint32_t)
+ *      Byte 45:48     The number of blocks in the third section (uint32_t)
+ *      .
+ *      .
+ *      .
+ *      Byte 49:50     The block size used to group data (uint16_t)
+ *      Byte 51:8507   The huffman table used to compress the file. After every 256 bit symbol the number of bits used
  *                     by the symbol are written as well as an 8 bit number. The size of the table is 256 x (256 + 8) bits
- *      Byte 8475:end  The compressed data
+ *      Byte 8508:end  The compressed data
  *
  * @param file       The original file
  * @param filename   The filename of the compressed file
@@ -259,34 +266,15 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
 
     uint16_t meta_data_size = 0;  // The size of the metadata in bytes
 
+    CompressArgs args[N_THREADS];  // The arguments for the threads
+
     // STEP 1 - Write the number of sections
     uint8_t n_sections = N_THREADS;  // The number of sections the file is divided to
     fwrite(&n_sections, sizeof(n_sections), 1, compressed);  // Write the number of sections to the file
     meta_data_size += sizeof(n_sections);  // Update the meta data size
 
-    // STEP 2 - Write the number of padding bits of each section (updated in the end)
-    uint32_t section_padding[N_THREADS] = {0};  // The number of padding bits of each section (initially 0)
-    fwrite(&section_padding, sizeof(section_padding[0]), N_THREADS, compressed);  // Write the padding bits to the file
-    meta_data_size += sizeof(section_padding[0]) * N_THREADS;  // Update the meta data size
-
-    // STEP 3 - Write the number of blocks of each section (updated in the end)
-    uint32_t n_blocks[N_THREADS] = {0};  // The number of blocks written to the file
-    fwrite(&n_blocks, sizeof(n_blocks[0]), N_THREADS, compressed);  // Write the number of blocks.
-    meta_data_size += sizeof(n_blocks[0]) * N_THREADS;  // Update the meta data size
-
-    // STEP 4 - Write the block size used to group data to the compressed file.
-    fwrite(&block_size, sizeof(block_size), 1, compressed);
-    meta_data_size += sizeof(block_size);  // Update the meta data size
-
-    // STEP 5 - Write the huffman table to the beginning of the file
-    writeHuffmanToFile(compressed, huffman, &meta_data_size);
-
-    uint16_t buffer_size = block_size / SYM_BUFF_SIZE;
-
-    CompressArgs args[N_THREADS];  // The arguments for the threads
-
-    // Create the arguments of every thread
-    for (int i = 0; i < N_THREADS; i++) {
+    // STEP 2 - Write the number of characters of each section and init the args
+    for (int i = 0; i < N_THREADS; ++i) {
         args[i].t_id = i;  // Set the thread id
 
         args[i].file = filename;  // The name of the file to be compressed
@@ -299,13 +287,39 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
         args[i].compressed_start_byte = 0;
         args[i].compressed_end_byte = 0;
 
-        for (int j = 0; j < 255; ++j) {
+        for (int j = 0; j < 256; ++j) {
             // Find the number of bytes each thread has to compress
             args[i].end_byte += huffman->frequencies[i][j];
 
             // find the number of compressed bits that the thread has to write
             args[i].compressed_end_byte += huffman->frequencies[i][j] * huffman->symbols[j].symbol_length;
         }
+
+        fwrite(&args[i].end_byte, sizeof(args[i].end_byte), 1, compressed);  // Write the number of bytes to the file
+        meta_data_size += sizeof(args[i].end_byte);  // Update the meta data size
+    }
+
+    // STEP 3 - Write the number of padding bits of each section (updated in the end)
+    uint32_t section_padding[N_THREADS] = {0};  // The number of padding bits of each section (initially 0)
+    fwrite(&section_padding, sizeof(section_padding[0]), N_THREADS, compressed);  // Write the padding bits to the file
+    meta_data_size += sizeof(section_padding[0]) * N_THREADS;  // Update the meta data size
+
+    // STEP 4 - Write the number of blocks of each section (updated in the end)
+    uint32_t n_blocks[N_THREADS] = {0};  // The number of blocks written to the file
+    fwrite(&n_blocks, sizeof(n_blocks[0]), N_THREADS, compressed);  // Write the number of blocks.
+    meta_data_size += sizeof(n_blocks[0]) * N_THREADS;  // Update the meta data size
+
+    // STEP 5 - Write the block size used to group data to the compressed file.
+    fwrite(&block_size, sizeof(block_size), 1, compressed);
+    meta_data_size += sizeof(block_size);  // Update the meta data size
+
+    // STEP 6 - Write the huffman table to the beginning of the file
+    writeHuffmanToFile(compressed, huffman, &meta_data_size);
+
+    uint16_t buffer_size = block_size / SYM_BUFF_SIZE;
+
+    // Create the arguments of every thread
+    for (int i = 0; i < N_THREADS; i++) {
 
         // if the number of bits don't align to the block size
         if (args[i].compressed_end_byte % block_size != 0) {
@@ -351,14 +365,21 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
 
 #ifdef DEBUG_MODE
     cout << "\n\nmetadata size: " << meta_data_size << endl;
-    for (int i = 0; i< N_THREADS; i++) {
+    for (auto & arg : args) {
         cout << "\n\n" << endl;
-        cout << "Thread " << args[i].t_id << " will compress bytes " << args[i].start_byte << " to " << args[i].end_byte << endl;
-        cout << "Thread " << args[i].t_id << " will write bytes " << args[i].compressed_start_byte << " to " << args[i].compressed_end_byte << endl;
-        cout << "Thread " << args[i].t_id << " will write " << *args[i].number_of_blocks << " blocks" << endl;
-        cout << "Thread " << args[i].t_id << " will write " << *args[i].number_of_padding << " padding bits" << endl;
-        cout << "Thread " << args[i].t_id << " will use a buffer size of " << args[i].buffer_size << endl;
+        cout << "Thread " << arg.t_id << " will compress bytes " << arg.start_byte << " to " << arg.end_byte << endl;
+        cout << "Thread " << arg.t_id << " will write bytes " << arg.compressed_start_byte << " to " << arg.compressed_end_byte << endl;
+        cout << "Thread " << arg.t_id << " will write " << *arg.number_of_blocks << " blocks" << endl;
+        cout << "Thread " << arg.t_id << " will write " << *arg.number_of_padding << " padding bits" << endl;
+        cout << "Thread " << arg.t_id << " will use a buffer size of " << arg.buffer_size << endl;
         cout << "\n\n" << endl;
+    }
+
+    cout << "\n\nCreated Huffman symbols:" << endl;
+
+    // Print the symbol array
+    for (auto & symbol : huffman->symbols) {
+        cout << "len: " << unsigned(symbol.symbol_length) << ", sym: " << hex << symbol.symbol << dec << endl;
     }
 #endif
 
@@ -383,7 +404,7 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     }
 
     // update the number of padding bits and the number of blocks written tho the compressed file
-    fseek(compressed, 1, SEEK_SET);  // Seek to the beginning of the padding bits
+    fseek(compressed, N_THREADS * 8 + 1, SEEK_SET);  // Seek to the beginning of the padding bits
 
     // Write the number of padding bits of every section to the meta data.
     fwrite(&section_padding, sizeof(section_padding[0]), N_THREADS, compressed);

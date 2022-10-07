@@ -258,34 +258,15 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
 
     uint16_t meta_data_size = 0;  // The size of the metadata in bytes
 
+    CompressJobArgs args[CILK_JOBS];  // The arguments for the threads
+
     // STEP 1 - Write the number of sections
     uint8_t n_sections = CILK_JOBS;  // The number of sections the file is divided to
     fwrite(&n_sections, sizeof(n_sections), 1, compressed);  // Write the number of sections to the file
     meta_data_size += sizeof(n_sections);  // Update the meta data size
 
-    // STEP 2 - Write the number of padding bits of each section (updated in the end)
-    uint32_t section_padding[CILK_JOBS] = {0};  // The number of padding bits of each section (initially 0)
-    fwrite(&section_padding, sizeof(section_padding[0]), CILK_JOBS, compressed);  // Write the padding bits to the file
-    meta_data_size += sizeof(section_padding[0]) * CILK_JOBS;  // Update the meta data size
-
-    // STEP 3 - Write the number of blocks of each section (updated in the end)
-    uint32_t n_blocks[CILK_JOBS] = {0};  // The number of blocks written to the file
-    fwrite(&n_blocks, sizeof(n_blocks[0]), CILK_JOBS, compressed);  // Write the number of blocks.
-    meta_data_size += sizeof(n_blocks[0]) * CILK_JOBS;  // Update the meta data size
-
-    // STEP 4 - Write the block size used to group data to the compressed file.
-    fwrite(&block_size, sizeof(block_size), 1, compressed);
-    meta_data_size += sizeof(block_size);  // Update the meta data size
-
-    // STEP 5 - Write the huffman table to the beginning of the file
-    writeHuffmanToFile(compressed, huffman, &meta_data_size);
-
-    uint16_t buffer_size = block_size / SYM_BUFF_SIZE;
-
-    CompressJobArgs args[CILK_JOBS];  // The arguments for the threads
-
-    // Create the arguments of every thread
-    for (int i = 0; i < CILK_JOBS; i++) {
+    // STEP 2 - Write the number of characters of each section and init the args
+    for (int i = 0; i < CILK_JOBS; ++i) {
         args[i].t_id = i;  // Set the thread id
 
         args[i].file = filename;  // The name of the file to be compressed
@@ -298,13 +279,39 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
         args[i].compressed_start_byte = 0;
         args[i].compressed_end_byte = 0;
 
-        for (int j = 0; j < 255; ++j) {
+        for (int j = 0; j < 256; ++j) {
             // Find the number of bytes each thread has to compress
             args[i].end_byte += huffman->frequencies[i][j];
 
             // find the number of compressed bits that the thread has to write
             args[i].compressed_end_byte += huffman->frequencies[i][j] * huffman->symbols[j].symbol_length;
         }
+
+        fwrite(&args[i].end_byte, sizeof(args[i].end_byte), 1, compressed);  // Write the number of bytes to the file
+        meta_data_size += sizeof(args[i].end_byte);  // Update the meta data size
+    }
+
+    // STEP 3 - Write the number of padding bits of each section (updated in the end)
+    uint32_t section_padding[CILK_JOBS] = {0};  // The number of padding bits of each section (initially 0)
+    fwrite(&section_padding, sizeof(section_padding[0]), CILK_JOBS, compressed);  // Write the padding bits to the file
+    meta_data_size += sizeof(section_padding[0]) * CILK_JOBS;  // Update the meta data size
+
+    // STEP 4 - Write the number of blocks of each section (updated in the end)
+    uint32_t n_blocks[CILK_JOBS] = {0};  // The number of blocks written to the file
+    fwrite(&n_blocks, sizeof(n_blocks[0]), CILK_JOBS, compressed);  // Write the number of blocks.
+    meta_data_size += sizeof(n_blocks[0]) * CILK_JOBS;  // Update the meta data size
+
+    // STEP 5 - Write the block size used to group data to the compressed file.
+    fwrite(&block_size, sizeof(block_size), 1, compressed);
+    meta_data_size += sizeof(block_size);  // Update the meta data size
+
+    // STEP 6 - Write the huffman table to the beginning of the file
+    writeHuffmanToFile(compressed, huffman, &meta_data_size);
+
+    uint16_t buffer_size = block_size / SYM_BUFF_SIZE;
+
+    // Create the arguments of every thread
+    for (int i = 0; i < CILK_JOBS; i++) {
 
         // if the number of bits don't align to the block size
         if (args[i].compressed_end_byte % block_size != 0) {
@@ -364,12 +371,13 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     int status[CILK_JOBS] = {0};  // The status of the threads
 
     cilk_scope {
-        // Create the threads
+        // Spawn the cilk jobs
         for (int i = 0; i < CILK_JOBS; i++) {
             status[i] = cilk_spawn compressFileJob(&args[i]);
         }
     }
 
+    // Check if any of the threads failed
     for (int i = 0; i < CILK_JOBS; ++i) {
         if (status[i] != 0) {
             std::cout << "Error in thread " << i << std::endl;
@@ -377,7 +385,7 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     }
 
     // update the number of padding bits and the number of blocks written tho the compressed file
-    fseek(compressed, 1, SEEK_SET);  // Seek to the beginning of the padding bits
+    fseek(compressed, CILK_JOBS * 8 + 1, SEEK_SET);  // Seek to the beginning of the padding bits
 
     // Write the number of padding bits of every section to the meta data.
     fwrite(&section_padding, sizeof(section_padding[0]), N_THREADS, compressed);
