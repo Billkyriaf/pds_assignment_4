@@ -1,0 +1,51 @@
+\documentclass[12pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm]{geometry}
+\usepackage{pgfplots}
+\usepackage{mathtools,amssymb}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage[backend=biber,style=numeric,sorting=ynt]{biblatex}
+\usepackage{hyperref}
+\usepackage{indentfirst}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+    citecolor=blue,
+    pdftitle={Pthreads and openCilk systems},
+}
+
+\pgfplotsset{compat=1.7}
+\graphicspath{ {images/} }
+\addbibresource{bib/bibliography.bib}
+
+
+\begin{document}
+
+    \input{chapters/title_page.tex}
+    
+    \tableofcontents
+
+    
+    \chapter*{Introduction}
+    \input{chapters/introduction}
+
+    \chapter*{State of the Art}
+    \input{chapters/sota}
+
+    \chapter*{Objective and Methodology}
+    \input{chapters/objective_method}
+
+    \chapter*{Results}
+    \input{chapters/testing.tex}
+
+    \chapter*{Functionality}
+    \input{chapters/functionality}
+
+    \printbibliography %Prints bibliography
+
+\end{document}
