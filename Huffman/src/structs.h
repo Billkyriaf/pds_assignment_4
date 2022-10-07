@@ -5,8 +5,8 @@
 
 #include "../include/uint256/uint256_t.h"
 
-#define N_THREADS 16
-#define CILK_JOBS 16
+#define N_THREADS 64
+#define CILK_JOBS N_THREADS
 
 
 /**
@@ -52,13 +52,8 @@ typedef struct ascii_huffman {
      * The frequency of every symbol measured by the threads. Depending on which main is running the array has a
      * different size
      */
-    #if defined(PTHREAD_MODE) || defined(SERIAL_MODE)
-        uint64_t frequencies[N_THREADS][256];
-    #elif defined(CILK_MODE)
-        uint64_t frequencies[CILK_JOBS][256];
-    #else
-        uint64_t frequencies[N_THREADS][256];
-    #endif
+    uint64_t frequencies[N_THREADS][256];
+
 } ASCIIHuffman;
 
 

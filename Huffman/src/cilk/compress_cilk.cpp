@@ -11,6 +11,7 @@
 
 //#define DEBUG_MODE
 
+using namespace std;
 
 /**
  * A symbol is inserted in the buffer. If the buffer is full after the insertion the buffer is written to the compressed
@@ -357,7 +358,7 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
 
     #ifdef DEBUG_MODE
         cout << "\n\nmetadata size: " << meta_data_size << endl;
-        for (int i = 0; i< N_THREADS; i++) {
+        for (int i = 0; i< CILK_JOBS; i++) {
             cout << "\n\n" << endl;
             cout << "Thread " << args[i].t_id << " will compress bytes " << args[i].start_byte << " to " << args[i].end_byte << endl;
             cout << "Thread " << args[i].t_id << " will write bytes " << args[i].compressed_start_byte << " to " << args[i].compressed_end_byte << endl;
@@ -388,10 +389,10 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     fseek(compressed, CILK_JOBS * 8 + 1, SEEK_SET);  // Seek to the beginning of the padding bits
 
     // Write the number of padding bits of every section to the meta data.
-    fwrite(&section_padding, sizeof(section_padding[0]), N_THREADS, compressed);
+    fwrite(&section_padding, sizeof(section_padding[0]), CILK_JOBS, compressed);
 
     // Write the number of blocks of every section to the meta data.
-    fwrite(&n_blocks, sizeof(n_blocks[0]), N_THREADS, compressed);
+    fwrite(&n_blocks, sizeof(n_blocks[0]), CILK_JOBS, compressed);
 
     // Close the file free memory and destroy the attributes
     free(newFilename);

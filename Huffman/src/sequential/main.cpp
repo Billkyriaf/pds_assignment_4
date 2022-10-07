@@ -1,5 +1,3 @@
-#define SERIAL_MODE  // This define is used to determine which main is being used
-
 #include <iostream>
 
 #include "../timer.h"
