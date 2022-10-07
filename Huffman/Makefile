@@ -17,9 +17,9 @@ BOLD = \033[1m
 LIBRARIES_SRC := $(shell find $(INC_DIRS) -name '*.cpp')
 LIBRARIES_SRC := $(LIBRARIES_SRC:%=$(BUILD_DIR)/%.o)
 
-SERIAL_SRC := $(shell find $(SRC_DIRS)/serial -name '*.cpp')
-SERIAL_SRC += $(shell find $(SRC_DIRS) -maxdepth 1 -name '*.cpp')
-SERIAL_SRC := $(SERIAL_SRC:%=$(BUILD_DIR)/%.o)
+SEQUENTIAL_SRC := $(shell find $(SRC_DIRS)/sequential -name '*.cpp')
+SEQUENTIAL_SRC += $(shell find $(SRC_DIRS) -maxdepth 1 -name '*.cpp')
+SEQUENTIAL_SRC := $(SEQUENTIAL_SRC:%=$(BUILD_DIR)/%.o)
 
 PTHREAD_SRC := $(shell find $(SRC_DIRS)/pthread -name '*.cpp')
 PTHREAD_SRC += $(shell find $(SRC_DIRS) -maxdepth 1 -name '*.cpp')
@@ -36,18 +36,18 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d) $(shell find $(INC_DIRS) -type d)
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CC_FLAGS := $(INC_FLAGS) -O3 -Wall -g
-PTHREAD_FLAGS := $(INC_FLAGS) -O3 -Wall -g -lpthread
-CILK_FLAGS := $(INC_FLAGS) -O3 -Wall -g -fopencilk # -fsanitize=cilk -Og -g
+CC_FLAGS := $(INC_FLAGS) -O3                    # -Wall -g
+PTHREAD_FLAGS := $(INC_FLAGS) -O3 -lpthread     # -Wall -g
+CILK_FLAGS := $(INC_FLAGS) -O3 -fopencilk       # -fsanitize=cilk -Og -g
 
 all: build_serial build_pthread build_cilk
 
 
-$(BUILD_DIR)/serial.out: $(SERIAL_SRC) $(LIBRARIES_SRC)
+$(BUILD_DIR)/sequential.out: $(SEQUENTIAL_SRC) $(LIBRARIES_SRC)
 	@echo
 	@echo -e "        $(BOLD)Linking...$(NC)"
 	@echo
-	@$(CC) $(CC_FLAGS) -o $(BUILD_DIR)/serial.out $(SERIAL_SRC) $(LIBRARIES_SRC)
+	@$(CC) $(CC_FLAGS) -o $(BUILD_DIR)/sequential.out $(SEQUENTIAL_SRC) $(LIBRARIES_SRC)
 	@echo -e "    $(GREEN)Build finished successfully!$(NC)"
 	@echo
 
@@ -84,11 +84,11 @@ $(CILK_BUILD_DIR)/%.cpp.o: %.cpp
 %.cpp:
 
 
-build_serial: $(BUILD_DIR)/serial.out
-run_serial: $(BUILD_DIR)/serial.out
+build_sequential: $(BUILD_DIR)/sequential.out
+run_sequential: $(BUILD_DIR)/sequential.out
 	@echo
 	@echo
-	@$(BUILD_DIR)/serial.out
+	@$(BUILD_DIR)/sequential.out
 	@echo
 	@echo
 
@@ -114,6 +114,6 @@ run_cilk: $(CILK_BUILD_DIR)/cilk.out
 .PHONY: clean
 clean:
 	@echo -e "$(RED)Clearing build directories...$(NC)"
-	@rm -rf $(BUILD_DIR)
-	@rm -rf $(CILK_BUILD_DIR)
+	@rm -rf $(BUILD_DIR)/*
+	@rm -rf $(CILK_BUILD_DIR)/*
 	@echo -e "$(GREEN)Done!$(NC)"

@@ -19,10 +19,11 @@ int main(int argc, char **argv) {
     // The huffman struct
     ASCIIHuffman huffman;
 
+    // Timer used to measure execution time
     Timer timer;
     Timer overall_timer;
 
-    //    char *input_file_name = argv[1];
+//    char *input_file_name = argv[1];
     // Create the file names (temp solution)
     const char *input_file_name = "./data/test_2";
     const char *output_file_name = "./data/test_2.huff";
@@ -90,6 +91,11 @@ int main(int argc, char **argv) {
     cout << "Compression elapsed time: ";
     displayElapsed(&timer);
 
+    stopTimer(&overall_timer);
+
+    cout << "Overall compression elapsed time: ";
+    displayElapsed(&overall_timer);
+
     cout << "Decompressing file..." << endl;
 
     startTimer(&timer);
@@ -98,13 +104,10 @@ int main(int argc, char **argv) {
 
     stopTimer(&timer);
 
-    cout << "Decompression elapsed time: ";
+    cout << "\nOverall decompression elapsed time: ";
     displayElapsed(&timer);
 
-    stopTimer(&overall_timer);
-    cout << "Overall elapsed time: ";
-    displayElapsed(&overall_timer);
-
+    // Check if the decompressed file is the same as the original
     verifyFiles(input_file_name, decoded_file_name);
 
     return 0;
