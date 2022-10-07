@@ -12,3 +12,5 @@ proj-pthreads-vs-cilk.pdf
 Huffman_SAP_on_IBM_Z.pdf
 
 test_code/
+
+Huffman/valgrind_log
