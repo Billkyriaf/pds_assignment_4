@@ -25,9 +25,9 @@ int main(int argc, char **argv) {
 
 //    char *input_file_name = argv[1];
     // Create the file names (temp solution)
-    const char *input_file_name = "./data/test_2";
-    const char *output_file_name = "./data/test_2.huff";
-    const char *decoded_file_name = "./data/test_2.dec";
+    const char *input_file_name = "./data/test_6";
+    const char *output_file_name = "./data/test_6.huff";
+    const char *decoded_file_name = "./data/test_6.dec";
 
     // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {

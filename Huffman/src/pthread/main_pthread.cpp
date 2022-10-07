@@ -16,18 +16,18 @@ using namespace std;
 
 
 int main(int argc, char **argv) {
+    // The huffman struct
+    ASCIIHuffman huffman;
+
     // Timer used to measure execution time
     Timer timer;
     Timer overall_timer;
 
-    // The huffman struct
-    ASCIIHuffman huffman;
-
 //    char *input_file_name = argv[1];
     // Create the file names (temp solution)
-    const char *input_file_name = "./data/test_2";
-    const char *output_file_name = "./data/test_2.huff";
-    const char *decoded_file_name = "./data/test_2.dec";
+    const char *input_file_name = "./data/test_6";
+    const char *output_file_name = "./data/test_6.huff";
+    const char *decoded_file_name = "./data/test_6.dec";
 
     // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     }
 
     for (int i = 0; i < N_THREADS; ++i) {
-        for (int j = 0; j < 255; ++j) {
+        for (int j = 0; j < 256; ++j) {
             huffman.frequencies[i][j] = 0;
         }
     }
@@ -98,6 +98,11 @@ int main(int argc, char **argv) {
     cout << "Compression elapsed time: ";
     displayElapsed(&timer);
 
+    stopTimer(&overall_timer);
+
+    cout << "Overall compression elapsed time: ";
+    displayElapsed(&overall_timer);
+
     cout << "Decompressing file..." << endl;
 
     startTimer(&timer);
@@ -106,14 +111,10 @@ int main(int argc, char **argv) {
 
     stopTimer(&timer);
 
-    cout << "Decompression elapsed time: ";
+    cout << "\nOverall decompression elapsed time: ";
     displayElapsed(&timer);
 
-    stopTimer(&overall_timer);
-
-    cout << "Overall elapsed time: ";
-    displayElapsed(&overall_timer);
-
+    // Check if the decompressed file is the same as the original
     verifyFiles(input_file_name, decoded_file_name);
 
     return 0;
