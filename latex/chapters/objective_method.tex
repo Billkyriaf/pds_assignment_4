@@ -1,0 +1,15 @@
+\subsubsection*{Objective}
+
+The main focus of this assignment is to compare the pthreads and openCilk models on multiple aspects. The most important is the performance of the benchmarking
+algorithm. The algorithm used as mentioned before is Huffman encoding. The sequential version of the algorithm was coded from scratch and can be found on the
+accompanying Github repository along with the parallel implementations.
+
+\subsubsection*{Methodology}
+All of the test will be performed on the Ryzen 7 5700G, which is an 8 core 16 thread CPU. The variables of the tests will be the number of threads used and the size of the input file.
+All other variables are kept constant in a way that other components, such as disk read and write speeds, don't interfere with the results. The input file will be
+a text file containing \href{https://loremipsum.io/}{lorem ipsum } which produces character frequency distribution as shown in the introduction of this document.
+The results will include an absolute time comparison and a speed up trend compared to the sequential implementation.
+
+\subsubsection*{Key differentiation}
+The main differentiation of this assignment for the previous papers is that it will also compare the ease of use of the two models as well as the functionality
+the two frameworks provide. Those aspects are inherently subjective and will be discussed in the results section.

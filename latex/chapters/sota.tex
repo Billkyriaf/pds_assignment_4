@@ -1,0 +1,15 @@
+\subsubsection*{Previous papers}
+
+Regarding the main focus point of this assignment there are plenty of papers comparing the performance of different threading programming
+models. Scott R. Taylor et al. \cite{multithreading-comparison} compared the performance of cilk, pthreads and Java threads. Their approach
+was to parallelize the fibonacci algorithm and to compare the performance of the different threading models. Their methodology was a time
+comparison between the three different models. They found that the cilk model was the fastest one and the Java threads model was the slowest one.
+
+On a more comprehensive level, Ensar Ajkunic et al. \cite{5-parallel-models} compared the performance of five different parallel programming models.
+Pthread, OpenMP, Threading Building Blocks, Cilk++ and MPI. Their approach was similar to the one of Taylor et al. \cite{multithreading-comparison}
+They compared the execution time of the algorithm written in the 5 models. The key difference was that they used matrix multiplication as the 
+benchmarking algorithm. Their results also included speed up trends compared to the sequential implementation. 
+
+At last but not least Solmaz Salehian et al. \cite{threading-models} compared the performance of multiple threading models using multiple algorithms.
+The methodology was slightly different from the previous two papers. Along with the execution time they also compared the ability of the models to
+scale on multiple cores and the performance gains from using more physical cores.

@@ -1,0 +1,16 @@
+*
+
+!.gitignore
+!main.tex
+!/bib/
+!/chapters/
+!/template/
+!/data/
+!/data/cilk/
+!/data/pthread/
+!/data/sequential/
+!/images/
+!*.tex
+!*.txt
+!*.bib
+!*.pdf
