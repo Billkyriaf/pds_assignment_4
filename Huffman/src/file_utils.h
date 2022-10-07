@@ -10,7 +10,7 @@
  * @param mode     The mode to open the file
  * @return  The FILE pointer created
  */
-FILE *openBinaryFile(const char *filename, const char *mode);
+FILE *openBinaryFile(const std::string& filename, const char *mode);
 
 
 /**
@@ -18,6 +18,6 @@ FILE *openBinaryFile(const char *filename, const char *mode);
  * @param input_file
  * @param output_file
  */
-void verifyFiles(const char *input_file, const char *output_file);
+void verifyFiles(const std::string& input_file, const std::string& output_file);
 
 #endif

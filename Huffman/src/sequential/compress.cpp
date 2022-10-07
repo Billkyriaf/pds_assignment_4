@@ -84,25 +84,15 @@ void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman) {
  *                     by the symbol are written as well as an 8 bit number. The size of the table is 256 x (256 + 8) bits
  *      Byte 8457:end  The compressed data
  *
- * @param file       The original file
- * @param filename   The filename of the compressed file
- * @param huffman    The huffman struct that contains the information for the compression
- * @param blockSize  The size in bytes of the data that every write operation writes to the file. (must be power of 2)
+ * @param filename         The name of the file to be compressed
+ * @param output_filename  The name of the compressed file
+ * @param huffman          The huffman struct that contains the information for the compression
+ * @param blockSize        The size in bytes of the data that every write operation writes to the file. (must be power of 2)
  */
-void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t blockSize) {
-
-    // Create the new file name
-    int len = (int) strlen(filename); // Get the length of the old filename
-    char *newFilename = (char *) malloc((len + 6) * sizeof(char));  // Allocate enough space for the new file name
-
-    memcpy(newFilename, filename, sizeof(char) * len);  // Copy the old name to the new name
-
-    char end[6] = ".huff";  // The string to be appended to the file name
-
-    memcpy(newFilename + len, end, sizeof(char) * 6);  // Append the ending to the file name
+void compressFile(const std::string& filename, const std::string& output_filename, ASCIIHuffman *huffman, uint16_t blockSize) {
 
     // Create the new file
-    FILE *compressed = openBinaryFile(newFilename, "wb");
+    FILE *compressed = openBinaryFile(output_filename, "wb");
     FILE *file = openBinaryFile(filename, "rb");
 
     // This is the number of padding bits to the end of the file. The padding bits align the data to bytes.
@@ -211,7 +201,6 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t blockSiz
     // Write the number of blocks.
     fwrite(&nBlocks, sizeof(nBlocks), 1, compressed);
 
-    free(newFilename);
     free(buffer);
     fclose(compressed);
     fclose(file);

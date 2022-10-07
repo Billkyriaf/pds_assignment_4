@@ -9,6 +9,6 @@
  * @param filename  The file name to count the frequencies from
  * @param huffman   The huffman struct
  */
-void charFrequency(const char *filename, ASCIIHuffman *huffman);
+void charFrequency(const std::string& filename, ASCIIHuffman *huffman);
 
 #endif

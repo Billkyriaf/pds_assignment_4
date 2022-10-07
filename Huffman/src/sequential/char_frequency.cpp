@@ -18,7 +18,7 @@
  * @param file     The file to count the frequencies
  * @param huffman  The huffman struct
  */
-void charFrequency(const char *filename, ASCIIHuffman *huffman) {
+void charFrequency(const std::string& filename, ASCIIHuffman *huffman) {
     FILE *file = openBinaryFile(filename, "rb");
 
     uint8_t c;  // The character read from the file

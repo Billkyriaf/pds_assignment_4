@@ -99,31 +99,19 @@ inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *n
  *   Step 3: Decode the symbols to characters and write them to the decompressed file
  *
  * @param filename  The name of the file to be decompressed
+ * @param decompressed_filename The name of the decompressed file
  */
-void decompressFile(const char *filename){
+void decompressFile(const std::string& filename, const std::string& decompressed_filename){
     // Open the decompressed file in read mode
     FILE *file = openBinaryFile(filename, "rb");
 
-    // Create a new file for decompression
-    int len = (int) strlen(filename); // Get the length of the old filename
-
-    char *newFilename = (char *) malloc((len - 1) * sizeof(char));  // Allocate enough space for the new file name
-
-    memcpy(newFilename, filename, sizeof(char) * (len - 5));  // Copy the old name to the new name
-
-    char end[5] = ".dec";  // The string to be appended to the file name
-
-    memcpy(newFilename + len - 5, end, sizeof(char) * 5);  // Append the ending to the file name
-
     // Create the new file
-    FILE *decompressed = openBinaryFile(newFilename, "wb");
+    FILE *decompressed = openBinaryFile(decompressed_filename, "wb");
 
     if (decompressed == nullptr) {
         std::cout << "\n\nCould not create file" << std::endl;
         exit(1);
     }
-
-    free(newFilename);  // free the no longer needed memory
 
     // This is the number of padding bits to the end of the file. The padding bits align the data to bytes.
     uint32_t padding_bits = 0;

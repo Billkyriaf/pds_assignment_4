@@ -22,11 +22,24 @@ int main(int argc, char **argv) {
     Timer overall_timer;
     Timer all;
 
-//    char *input_file_name = argv[1];
+    if (argc != 2) {
+        cout << "Wrong number of arguments. Expected 1 got " << argc - 1 << endl;
+        cout << "To run this executable run sequential.out path/to/data/file" << endl;
+        return -1;
+    }
+
+    string input_file_name = argv[1];
     // Create the file names (temp solution)
-    const char *input_file_name = "./data/test_6";
-    const char *output_file_name = "./data/test_6.huff";
-    const char *decoded_file_name = "./data/test_6.dec";
+//    const char *input_file_name = "./data/test_6";
+//    const char *output_file_name = "./data/test_6.huff";
+//    const char *decoded_file_name = "./data/test_6.dec";
+
+    string output_file_name = input_file_name + ".huff";
+    string decompressed_file_name = input_file_name + ".dec";
+
+    cout << input_file_name << endl;
+    cout << output_file_name << endl;
+    cout << decompressed_file_name << endl;
 
     // Initialize the frequency array and the symbols array
     for (int i = 0; i < 256; ++i) {
@@ -84,7 +97,7 @@ int main(int argc, char **argv) {
 
     startTimer(&timer);
 
-    compressFile(input_file_name, &huffman, 8192 * 4);
+    compressFile(input_file_name, output_file_name, &huffman, 8192 * 4);
 
     stopTimer(&timer);
 
@@ -100,7 +113,7 @@ int main(int argc, char **argv) {
 
     startTimer(&timer);
 
-    decompressFile(output_file_name);
+    decompressFile(output_file_name, decompressed_file_name);
 
     stopTimer(&timer);
 
@@ -112,7 +125,7 @@ int main(int argc, char **argv) {
     displayElapsed(&all);
 
     // Check if the decompressed file is the same as the original
-    verifyFiles(input_file_name, decoded_file_name);
+    verifyFiles(input_file_name, decompressed_file_name);
 
     return 0;
 }
