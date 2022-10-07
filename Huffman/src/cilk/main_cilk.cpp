@@ -20,6 +20,7 @@ int main(int argc, char **argv) {
     // Timer used to measure execution time
     Timer timer;
     Timer overall_timer;
+    Timer all;
 
 //    char *input_file_name = argv[1];
     // Create the file names (temp solution)
@@ -35,6 +36,7 @@ int main(int argc, char **argv) {
     }
 
     startTimer(&overall_timer);
+    startTimer(&all);
 
     cout << "Calculating frequencies..." << endl;
 
@@ -104,6 +106,10 @@ int main(int argc, char **argv) {
 
     cout << "\nOverall decompression elapsed time: ";
     displayElapsed(&timer);
+
+    stopTimer(&all);
+    cout << "Overall elapsed time: ";
+    displayElapsed(&all);
 
     // Check if the decompressed file is the same as the original
     verifyFiles(input_file_name, decoded_file_name);
