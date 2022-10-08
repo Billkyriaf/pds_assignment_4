@@ -47,7 +47,7 @@ This project uses make utilities to build and run the executables.
 
 You can install OpenCilk by following the instructions of the official [website](https://www.opencilk.org/doc/users-guide/install/#installing-using-a-tarball). The official support is for Ubuntu but the binaries have been tested on Manjaro Linux as well and they are functional.
 
-IMPORTANT! The path to the openCilk `clang++` binary should be updated in the [Makefile](https://github.com/Billkyriaf/pds_assignment_4/blob/bed430e7874ad74072cd0b666c2ac9936091bbf8/Huffman/Makefile#L2)
+`IMPORTANT!` The path to the openCilk `clang++` binary should be updated in the [Makefile](https://github.com/Billkyriaf/pds_assignment_4/blob/bed430e7874ad74072cd0b666c2ac9936091bbf8/Huffman/Makefile#L2)
 
 #### 3.3. uint256_t library
 
