@@ -43,9 +43,8 @@ void createFileNames(const char *input_file_name, char *compressed, char *decomp
  */
 FILE *openBinaryFile(const string& filename, const char *mode) {
     FILE *file = nullptr;
-    const char* name = filename.c_str();
 
-    file = fopen(name, mode);
+    file = fopen(filename.c_str(), mode);
 
     if (file == nullptr) {
         cout << "File not found..." << endl;
@@ -54,6 +53,7 @@ FILE *openBinaryFile(const string& filename, const char *mode) {
 
     return file;
 }
+
 
 /**
  * Calculates the sha256 hash of the input and output files and compares the results

@@ -216,6 +216,10 @@ void decompressFile(const string& filename, const string& decompressed_filename)
     // Open the decompressed input_file in read mode
     FILE *input_file = openBinaryFile(filename, "rb");
 
+    // Create the file if it does not exist
+    FILE *tmp = openBinaryFile(decompressed_filename, "wb");
+    fclose(tmp);
+
     // Start reading the metadata from the input file
 
 #ifdef DEBUG_MODE
