@@ -271,11 +271,6 @@ void compressFile(const string& filename, const string& compressed_filename, ASC
 
         args[i].huffman = huffman;  // The huffman struct containing the symbols
 
-//        args[i].start_byte = 0;
-//        args[i].end_byte = 0;
-//        args[i].compressed_start_byte = 0;
-//        args[i].compressed_end_byte = 0;
-
         for (int j = 0; j < 256; ++j) {
             // Find the number of bytes each thread has to compress
             args[i].end_byte += huffman->frequencies[i][j];

@@ -7,11 +7,11 @@
 
 
 typedef struct job_args {
-    uint64_t *freq_arr;
-    const char *filename;
+    uint64_t *freq_arr = nullptr;
+    std::string filename;
 
-    uint64_t start_byte;  // inclusive
-    uint64_t end_byte;  // exclusive
+    uint64_t start_byte = 0;  // inclusive
+    uint64_t end_byte = 0;  // exclusive
 
 } JobArgs;
 
@@ -70,7 +70,7 @@ void frequencyRunnable(JobArgs *arguments) {
  * @param filename The input file name (to be compressed)
  * @param huffman  The huffman struct
  */
-void calculateFrequency(const char *filename, ASCIIHuffman *huffman) {
+void calculateFrequency(const std::string& filename, ASCIIHuffman *huffman) {
     FILE *file = openBinaryFile(filename, "rb");
 
     // Get the file length

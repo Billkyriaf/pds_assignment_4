@@ -242,20 +242,10 @@ int compressFileJob(CompressJobArgs *arguments) {
  * @param huffman    The huffman struct that contains the information for the compression
  * @param block_size The size in bits of the data that every write operation writes to the file. (must be power of 2)
  */
-void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_size) {
-
-    // Create the new file name
-    int len = (int) strlen(filename); // Get the length of the old filename
-    char *newFilename = (char *) malloc((len + 6) * sizeof(char));  // Allocate enough space for the new file name
-
-    memcpy(newFilename, filename, sizeof(char) * len);  // Copy the old name to the new name
-
-    char end[6] = ".huff";  // The string to be appended to the file name
-
-    memcpy(newFilename + len, end, sizeof(char) * 6);  // Append the ending to the file name
+void compressFile(const string& filename, const string& compressed_filename, ASCIIHuffman *huffman, uint16_t block_size) {
 
     // Create the new file
-    FILE *compressed = openBinaryFile(newFilename, "wb");
+    FILE *compressed = openBinaryFile(compressed_filename, "wb");
 
     uint16_t meta_data_size = 0;  // The size of the metadata in bytes
 
@@ -270,8 +260,8 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     for (int i = 0; i < CILK_JOBS; ++i) {
         args[i].t_id = i;  // Set the thread id
 
-        args[i].file = filename;  // The name of the file to be compressed
-        args[i].output_file = newFilename;  // The name of the compressed file
+        args[i].file = filename.c_str();  // The name of the file to be compressed
+        args[i].output_file = compressed_filename.c_str();  // The name of the compressed file
 
         args[i].huffman = huffman;  // The huffman struct containing the symbols
 
@@ -395,6 +385,5 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     fwrite(&n_blocks, sizeof(n_blocks[0]), CILK_JOBS, compressed);
 
     // Close the file free memory and destroy the attributes
-    free(newFilename);
     fclose(compressed);
 }

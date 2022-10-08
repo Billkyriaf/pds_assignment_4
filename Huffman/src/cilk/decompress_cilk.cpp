@@ -207,19 +207,9 @@ void decompressFileJob(DecompressJobArgs *decompress_args){
  *   Step 3: Decode the symbols to characters and write them to the decompressed file
  *
  * @param filename  The name of the file to be decompressed
+ * @param decompressed_filename The name of the decompressed file
  */
-void decompressFile(const char *filename){
-    // Create a new input_file for decompression
-    int len = (int) strlen(filename); // Get the length of the old filename
-
-    char *newFilename = (char *) malloc((len) * sizeof(char));  // Allocate enough space for the new input_file name
-
-    memcpy(newFilename, filename, sizeof(char) * (len - 5));  // Copy the old name to the new name
-
-    char end[] = ".dec";  // The string to be appended to the input_file name
-
-    memcpy(newFilename + len - 5, end, sizeof(char) * 5);  // Append the ending to the input_file name
-
+void decompressFile(const string& filename, const string& decompressed_filename){
 
     // Open the decompressed input_file in read mode
     FILE *input_file = openBinaryFile(filename, "rb");
@@ -297,8 +287,8 @@ void decompressFile(const char *filename){
 
     // Prepare the arguments for the threads
     for (int i = 0; i < n_sections; ++i) {
-        args[i].file = filename;
-        args[i].output_file = newFilename;
+        args[i].file = filename.c_str();
+        args[i].output_file = decompressed_filename.c_str();
 
         if (i == 0){
             args[i].start_byte = meta_data_size;
@@ -326,7 +316,6 @@ void decompressFile(const char *filename){
     }
 
     fclose(input_file);
-    free(newFilename);
     free(args);
     free(section_sizes);
     free(section_padding);

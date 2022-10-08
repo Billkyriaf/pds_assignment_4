@@ -10,6 +10,6 @@
  * @param filename The input file name (to be compressed)
  * @param huffman  The huffman struct
  */
-void calculateFrequency(const char *filename, ASCIIHuffman *huffman);
+void calculateFrequency(const std::string& filename, ASCIIHuffman *huffman) ;
 
 #endif
