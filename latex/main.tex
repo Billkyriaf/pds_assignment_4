@@ -29,21 +29,26 @@
     \input{chapters/title_page.tex}
     
     \tableofcontents
-
+    \clearpage
     
-    \chapter*{Introduction}
+    \addcontentsline{toc}{section}{Introduction}
+    \section*{Introduction}
     \input{chapters/introduction}
 
-    \chapter*{State of the Art}
+    \addcontentsline{toc}{section}{State of the Art}
+    \section*{State of the Art}
     \input{chapters/sota}
 
-    \chapter*{Objective and Methodology}
+    \addcontentsline{toc}{section}{Objective and Methodology}
+    \section*{Objective and Methodology}
     \input{chapters/objective_method}
 
-    \chapter*{Results}
+    \addcontentsline{toc}{section}{Results}
+    \section*{Results}
     \input{chapters/testing.tex}
 
-    \chapter*{Functionality}
+    \addcontentsline{toc}{section}{Functionality}
+    \section*{Functionality}
     \input{chapters/functionality}
 
     \printbibliography %Prints bibliography
