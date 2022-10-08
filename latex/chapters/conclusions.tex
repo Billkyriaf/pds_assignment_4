@@ -1,0 +1,11 @@
+Comparing the results of the testing revealed that the performance of the 
+openCilk library is very close to that of the Pthreads. In addition openCilk
+is easier to use and significantly faster to implement compared to the Pthreads
+library. The work stealing architecture of the openCilk makes it very 
+competitive with all the other parallel programming models.
+
+This assignment did not include multiCilk in the comparison. MultiCilk is the 
+combination of the work stealing architecture (thread pools) with the POSIX 
+locks and mutexes. The implementation of the algorithm used in this assignment
+did not require any inter-thread communication or thread synchronization, so
+the usage of multiCilk was not required. 
