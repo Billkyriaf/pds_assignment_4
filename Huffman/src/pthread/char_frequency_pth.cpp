@@ -7,12 +7,12 @@
 //#define DEBUG_MODE
 
 typedef struct freq_args {
-    int t_id;
-    uint64_t *freq_arr;
-    const char *filename;
+    int t_id = 0;
+    uint64_t *freq_arr = nullptr;
+    std::string filename;
 
-    uint64_t start_byte;  // inclusive
-    uint64_t end_byte;  // exclusive
+    uint64_t start_byte = 0;  // inclusive
+    uint64_t end_byte = 0;  // exclusive
 
 } FreqArgs;
 
@@ -82,7 +82,7 @@ void *frequencyRunnable(void *args) {
  * @param filename The input file name (to be compressed)
  * @param huffman  The huffman struct
  */
-void calculateFrequency(const char *filename, ASCIIHuffman *huffman) {
+void calculateFrequency(const std::string& filename, ASCIIHuffman *huffman) {
     FILE *file = openBinaryFile(filename, "rb");
 
     // Get the file length

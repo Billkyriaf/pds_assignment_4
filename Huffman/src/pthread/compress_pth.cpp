@@ -80,21 +80,21 @@ void writeHuffmanToFile(FILE *file, ASCIIHuffman *huffman, uint16_t *meta_data_s
 
 
 typedef struct compress_args{
-    int t_id;                 /// The id of the thread
-    char const *file;         /// The file to be compressed
-    char const *output_file;  /// The compressed file
-    ASCIIHuffman *huffman;    /// The huffman struct containing the symbols
+    int t_id = 0;                           /// The id of the thread
+    const char* file = nullptr;             /// The file to be decompressed
+    const char* output_file = nullptr;      /// The decompressed file
+    ASCIIHuffman *huffman = nullptr;        /// The huffman struct containing the symbols
 
-    uint64_t start_byte;      /// The thread reads from this byte (inclusive)
-    uint64_t end_byte;        /// The thread reads up to this byte (exclusive)
+    uint64_t start_byte = 0;                /// The thread reads from this byte (inclusive)
+    uint64_t end_byte = 0;                  /// The thread reads up to this byte (exclusive)
 
-    uint64_t compressed_start_byte;    /// The thread starts writing from this byte (inclusive)
-    uint64_t compressed_end_byte;      /// The thread stops writing up to this byte (exclusive)
+    uint64_t compressed_start_byte = 0;     /// The thread starts writing from this byte (inclusive)
+    uint64_t compressed_end_byte = 0;       /// The thread stops writing up to this byte (exclusive)
 
-    uint32_t *number_of_blocks;        /// The number of blocks that the thread writes to the file
-    uint32_t *number_of_padding;       /// The number of padding bits that the thread writes to the end of the section
+    uint32_t *number_of_blocks = nullptr;   /// The number of blocks that the thread writes to the file
+    uint32_t *number_of_padding = nullptr;  /// The number of padding bits that the thread writes to the end of the section
 
-    uint16_t buffer_size;              /// The size of the buffer in bytes
+    uint16_t buffer_size = 0;               /// The size of the buffer in bytes
 } CompressArgs;
 
 
@@ -244,25 +244,14 @@ void *compressFileRunnable(void *args) {
  *                     by the symbol are written as well as an 8 bit number. The size of the table is 256 x (256 + 8) bits
  *      Byte 8508:end  The compressed data
  *
- * @param file       The original file
- * @param filename   The filename of the compressed file
- * @param huffman    The huffman struct that contains the information for the compression
- * @param block_size The size in bits of the data that every write operation writes to the file. (must be power of 2)
+ * @param filename             The name of the input file
+ * @param compressed_filename  The name of the compressed file
+ * @param huffman              The huffman struct that contains the information for the compression
+ * @param block_size           The size in bits of the data that every write operation writes to the file. (must be power of 2)
  */
-void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_size) {
-
-    // Create the new file name
-    int len = (int) strlen(filename); // Get the length of the old filename
-    char *newFilename = (char *) malloc((len + 6) * sizeof(char));  // Allocate enough space for the new file name
-
-    memcpy(newFilename, filename, sizeof(char) * len);  // Copy the old name to the new name
-
-    char end[6] = ".huff";  // The string to be appended to the file name
-
-    memcpy(newFilename + len, end, sizeof(char) * 6);  // Append the ending to the file name
-
+void compressFile(const string& filename, const string& compressed_filename, ASCIIHuffman *huffman, uint16_t block_size) {
     // Create the new file
-    FILE *compressed = openBinaryFile(newFilename, "wb");
+    FILE *compressed = openBinaryFile(compressed_filename, "wb");
 
     uint16_t meta_data_size = 0;  // The size of the metadata in bytes
 
@@ -277,15 +266,15 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     for (int i = 0; i < N_THREADS; ++i) {
         args[i].t_id = i;  // Set the thread id
 
-        args[i].file = filename;  // The name of the file to be compressed
-        args[i].output_file = newFilename;  // The name of the compressed file
+        args[i].file = filename.c_str();  // The name of the file to be compressed
+        args[i].output_file = compressed_filename.c_str();  // The name of the compressed file
 
         args[i].huffman = huffman;  // The huffman struct containing the symbols
 
-        args[i].start_byte = 0;
-        args[i].end_byte = 0;
-        args[i].compressed_start_byte = 0;
-        args[i].compressed_end_byte = 0;
+//        args[i].start_byte = 0;
+//        args[i].end_byte = 0;
+//        args[i].compressed_start_byte = 0;
+//        args[i].compressed_end_byte = 0;
 
         for (int j = 0; j < 256; ++j) {
             // Find the number of bytes each thread has to compress
@@ -413,7 +402,6 @@ void compressFile(const char *filename, ASCIIHuffman *huffman, uint16_t block_si
     fwrite(&n_blocks, sizeof(n_blocks[0]), N_THREADS, compressed);
 
     // Close the file free memory and destroy the attributes
-    free(newFilename);
     fclose(compressed);
 
     for (auto & attribute : attributes) {

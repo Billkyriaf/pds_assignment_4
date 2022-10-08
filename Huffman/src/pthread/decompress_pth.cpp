@@ -77,22 +77,23 @@ inline void decodeBuffer(HuffmanNode *nodes, uint16_t root_index, HuffmanNode *n
     }
 }
 
+
 typedef struct decompress_args{
-    int t_id;                 /// The id of the thread
-    char const *file;         /// The file to be decompressed
-    char const *output_file;  /// The decompressed file
-    ASCIIHuffman *huffman;    /// The huffman struct containing the symbols
+    int t_id = 0;                          /// The id of the thread
+    const char* file = nullptr;            /// The file to be decompressed
+    const char* output_file = nullptr;     /// The decompressed file
+    ASCIIHuffman *huffman = nullptr;       /// The huffman struct containing the symbols
 
-    uint64_t start_byte;      /// The thread reads from this byte (inclusive)
-    uint64_t end_byte;        /// The thread reads up to this byte (exclusive)
+    uint64_t start_byte = 0;               /// The thread reads from this byte (inclusive)
+    uint64_t end_byte = 0;                 /// The thread reads up to this byte (exclusive)
 
-    uint64_t decompressed_start_byte;  /// The thread starts writing from this byte (inclusive)
-    uint64_t decompressed_end_byte;    /// The thread stops writing up to this byte (exclusive)
+    uint64_t decompressed_start_byte = 0;  /// The thread starts writing from this byte (inclusive)
+    uint64_t decompressed_end_byte = 0;    /// The thread stops writing up to this byte (exclusive)
 
-    uint32_t number_of_blocks;         /// The number of blocks that the thread has to decompress
-    uint32_t number_of_padding;        /// The number of padding bits that the thread has to the end of it's section
+    uint32_t number_of_blocks = 0;         /// The number of blocks that the thread has to decompress
+    uint32_t number_of_padding = 0;        /// The number of padding bits that the thread has to the end of it's section
 
-    uint16_t buffer_size;              /// The size of the buffer in bytes
+    uint16_t buffer_size = 0;              /// The size of the buffer in bytes
 
 } DecompressArgs;
 
@@ -112,8 +113,8 @@ void *decompressFileRunnable(void *args){
     uint16_t root_index = huffmanFromArray(decompress_args->huffman, nodes);
 
     // Open the files
-    FILE *input_file = fopen(decompress_args->file, "rb");
-    FILE *decompressed = fopen(decompress_args->output_file, "rb+");
+    FILE *input_file = openBinaryFile(decompress_args->file, "rb");
+    FILE *decompressed = openBinaryFile(decompress_args->output_file, "rb+");
     // Seek the starting position of the files
     fseek(input_file, (long int)decompress_args->start_byte, SEEK_SET);
     fseek(decompressed, (long int)decompress_args->decompressed_start_byte, SEEK_SET);
@@ -208,19 +209,9 @@ void *decompressFileRunnable(void *args){
  *   Step 3: Decode the symbols to characters and write them to the decompressed file
  *
  * @param filename  The name of the file to be decompressed
+ * @param decompressed_filename The name of the decompressed file
  */
-void decompressFile(const char *filename){
-    // Create a new input_file for decompression
-    int len = (int) strlen(filename); // Get the length of the old filename
-
-    char *newFilename = (char *) malloc((len - 1) * sizeof(char));  // Allocate enough space for the new input_file name
-
-    memcpy(newFilename, filename, sizeof(char) * (len - 5));  // Copy the old name to the new name
-
-    char end[5] = ".dec";  // The string to be appended to the input_file name
-
-    memcpy(newFilename + len - 5, end, sizeof(char) * 5);  // Append the ending to the input_file name
-
+void decompressFile(const string& filename, const string& decompressed_filename){
 
     // Open the decompressed input_file in read mode
     FILE *input_file = openBinaryFile(filename, "rb");
@@ -304,8 +295,8 @@ void decompressFile(const char *filename){
 
     // Prepare the arguments for the threads
     for (int i = 0; i < n_sections; ++i) {
-        args[i].file = filename;
-        args[i].output_file = newFilename;
+        args[i].file = filename.c_str();
+        args[i].output_file = decompressed_filename.c_str();
 
         if (i == 0){
             args[i].start_byte = meta_data_size;
@@ -358,7 +349,6 @@ void decompressFile(const char *filename){
 
 
     fclose(input_file);
-    free(newFilename);
     free(threads);
     free(args);
     free(section_sizes);
