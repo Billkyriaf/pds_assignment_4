@@ -88,7 +88,7 @@ build_sequential: $(BUILD_DIR)/sequential.out
 run_sequential: $(BUILD_DIR)/sequential.out
 	@echo
 	@echo
-	@$(BUILD_DIR)/sequential.out ./data/test_3
+	@$(BUILD_DIR)/sequential.out ./data/test_data
 	@echo
 	@echo
 
@@ -97,7 +97,7 @@ build_pthread: $(BUILD_DIR)/pthread.out
 run_pthread: $(BUILD_DIR)/pthread.out
 	@echo
 	@echo
-	@$(BUILD_DIR)/pthread.out ./data/test_3
+	@$(BUILD_DIR)/pthread.out ./data/test_data
 	@echo
 	@echo
 
@@ -106,7 +106,7 @@ build_cilk: $(CILK_BUILD_DIR)/cilk.out
 run_cilk: $(CILK_BUILD_DIR)/cilk.out
 	@echo
 	@echo
-	@$(CILK_BUILD_DIR)/cilk.out ./data/test_3
+	@$(CILK_BUILD_DIR)/cilk.out ./data/test_data
 	@echo
 	@echo
 
