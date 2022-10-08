@@ -47,6 +47,8 @@ This project uses make utilities to build and run the executables.
 
 You can install OpenCilk by following the instructions of the official [website](https://www.opencilk.org/doc/users-guide/install/#installing-using-a-tarball). The official support is for Ubuntu but the binaries have been tested on Manjaro Linux as well and they are functional.
 
+>Important note! The path to the openCilk clang++ binary should be updated in the [Makefile](https://github.com/Billkyriaf/pds_assignment_4/blob/bed430e7874ad74072cd0b666c2ac9936091bbf8/Huffman/Makefile#L2)
+
 #### 3.3. uint256_t library
 
 The uint256_t library is used to handle the 256 bit integers used in the project. The library is included in the repository and it is not necessary to install it. If you want to find out more about it check the official [repository](https://github.com/calccrypto/uint256_t)
